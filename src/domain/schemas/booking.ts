@@ -30,10 +30,17 @@ export const bookingFormSchema = guestDetailsSchema.extend({
 })
 
 export const bookingLineItemSchema = z.object({
-  kind: z.enum(['base', 'second_room', 'videoke', 'custom_charge', 'discount']),
+  kind: z.enum(['base_package', 'included_room', 'additional_room', 'videoke', 'custom_charge', 'discount']),
   description: z.string().trim().min(1, 'Add a description.').max(160),
   quantity: z.number().int().positive(),
   unitAmountMinor: z.number().int(),
+}).superRefine((item, context) => {
+  if (item.kind === 'discount' && item.unitAmountMinor > 0) {
+    context.addIssue({ code: 'custom', path: ['unitAmountMinor'], message: 'Discount amounts must be negative.' })
+  }
+  if (item.kind !== 'discount' && item.unitAmountMinor < 0) {
+    context.addIssue({ code: 'custom', path: ['unitAmountMinor'], message: 'Charge amounts cannot be negative.' })
+  }
 })
 
 export const paymentEntrySchema = z.object({
@@ -47,3 +54,4 @@ export const paymentEntrySchema = z.object({
 
 export type GuestDetailsInput = z.input<typeof guestDetailsSchema>
 export type BookingFormInput = z.input<typeof bookingFormSchema>
+export type BookingFormData = z.output<typeof bookingFormSchema>

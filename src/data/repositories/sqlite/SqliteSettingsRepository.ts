@@ -1,4 +1,4 @@
-import type { SettingsRepository, SettingRecord } from '../contracts/SettingsRepository'
+import type { SettingsRepository, SettingRecord } from '../../../domain/ports/SettingsRepository'
 import type { SqliteClient } from '../../database/SqliteClient'
 
 export class SqliteSettingsRepository implements SettingsRepository {

@@ -1,52 +1,8 @@
-import initSqlJs from 'sql.js'
-import type { Database as SqlJsDatabase, SqlJsStatic } from 'sql.js'
 import migration from '../drizzle/0000_wandering_bulldozer.sql'
-import type { SqliteClient, SqliteValue } from '../src/data/database/SqliteClient'
+import { createMemorySqlite, type MemorySqliteClient } from './support/memorySqlite'
 import { SqliteBookingRepository } from '../src/data/repositories/sqlite/SqliteBookingRepository'
 import { SqliteSettingsRepository } from '../src/data/repositories/sqlite/SqliteSettingsRepository'
 import type { Booking, BookingActivity, BookingId, BookingLineItem, UUID } from '../src/domain/models'
-
-class MemorySqliteClient implements SqliteClient {
-  constructor(private readonly database: SqlJsDatabase) {}
-
-  async execute(sql: string, values: SqliteValue[] = []): Promise<void> {
-    this.database.run(sql, values)
-  }
-
-  async first<Row>(sql: string, values: SqliteValue[] = []): Promise<Row | null> {
-    const statement = this.database.prepare(sql)
-    try {
-      statement.bind(values)
-      return statement.step() ? statement.getAsObject() as Row : null
-    } finally {
-      statement.free()
-    }
-  }
-
-  async all<Row>(sql: string, values: SqliteValue[] = []): Promise<Row[]> {
-    const statement = this.database.prepare(sql)
-    try {
-      statement.bind(values)
-      const rows: Row[] = []
-      while (statement.step()) rows.push(statement.getAsObject() as Row)
-      return rows
-    } finally {
-      statement.free()
-    }
-  }
-
-  async transaction<Result>(work: (transaction: SqliteClient) => Promise<Result>): Promise<Result> {
-    this.database.run('BEGIN')
-    try {
-      const result = await work(this)
-      this.database.run('COMMIT')
-      return result
-    } catch (error) {
-      this.database.run('ROLLBACK')
-      throw error
-    }
-  }
-}
 
 const bookingId = 'b3d73b08-7d4c-4ecf-b5f4-62da231ad718' as BookingId
 const now = '2026-10-07T10:00:00.000Z'
@@ -94,19 +50,13 @@ function makeActivity(): BookingActivity {
 }
 
 describe('SQLite repositories and schema migration', () => {
-  let sqlite: SqlJsStatic
-  let database: SqlJsDatabase
+  let database: import('sql.js').Database
   let client: MemorySqliteClient
 
-  beforeAll(async () => {
-    sqlite = await initSqlJs({ locateFile: () => require.resolve('sql.js/dist/sql-wasm.wasm') })
-  })
-
-  beforeEach(() => {
-    database = new sqlite.Database()
-    database.run('PRAGMA foreign_keys = ON')
-    database.run(migration.replaceAll('--> statement-breakpoint', ''))
-    client = new MemorySqliteClient(database)
+  beforeEach(async () => {
+    const initialized = await createMemorySqlite(migration)
+    database = initialized.database
+    client = initialized.client
   })
 
   afterEach(() => database.close())

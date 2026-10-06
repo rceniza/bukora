@@ -1,4 +1,4 @@
-import type { Booking, BookingActivity, BookingLineItem, BookingId } from '../../../domain/models'
+import type { Booking, BookingActivity, BookingLineItem, BookingId } from '../models'
 
 export interface BookingAggregate {
   booking: Booking

@@ -41,6 +41,12 @@ describe('booking schemas', () => {
     expect(bookingLineItemSchema.safeParse({
       kind: 'discount', description: '', quantity: 1, unitAmountMinor: -50000,
     }).success).toBe(false)
+    expect(bookingLineItemSchema.safeParse({
+      kind: 'discount', description: 'Discount', quantity: 1, unitAmountMinor: -50000,
+    }).success).toBe(true)
+    expect(bookingLineItemSchema.safeParse({
+      kind: 'discount', description: 'Discount', quantity: 1, unitAmountMinor: 50000,
+    }).success).toBe(false)
   })
 
   it('validates payment entries and keeps the reference optional', () => {

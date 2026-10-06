@@ -1,5 +1,5 @@
 import type { BookingActivity, BookingId, BookingLineItem, Booking, UUID } from '../../../domain/models'
-import type { BookingAggregate, BookingRepository, CreateBookingRecord } from '../contracts/BookingRepository'
+import type { BookingAggregate, BookingRepository, CreateBookingRecord } from '../../../domain/ports/BookingRepository'
 import type { SqliteClient } from '../../database/SqliteClient'
 
 interface BookingRow {
