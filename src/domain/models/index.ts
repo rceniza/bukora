@@ -1,9 +1,10 @@
-export type BookingId = string
-export type LineItemId = string
-export type PaymentId = string
-export type ActivityId = string
+export type UUID = string & { readonly __uuid: unique symbol }
+export type BookingId = UUID
+export type LineItemId = UUID
+export type PaymentId = UUID
+export type ActivityId = UUID
 
-export type BookingStatus = 'confirmed' | 'completed' | 'cancelled'
+export type BookingStatus = 'tentative' | 'confirmed' | 'completed' | 'cancelled'
 
 export interface Booking {
   id: BookingId
@@ -12,7 +13,7 @@ export interface Booking {
   address: string | null
   cellphone: string
   email: string | null
-  pax: number | null
+  pax: number
   checkInDate: string
   checkOutDate: string
   notes: string | null
@@ -22,8 +23,9 @@ export interface Booking {
 }
 
 export type BookingLineItemKind =
-  | 'base'
-  | 'second_room'
+  | 'base_package'
+  | 'included_room'
+  | 'additional_room'
   | 'videoke'
   | 'custom_charge'
   | 'discount'
@@ -47,7 +49,7 @@ export interface BookingPayment {
   kind: PaymentKind
   amountMinor: number
   paidAt: string
-  method: string
+  method: string | null
   transactionReference: string | null
   notes: string | null
   createdAt: string
