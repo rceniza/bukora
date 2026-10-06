@@ -67,8 +67,8 @@ export interface BookingActivity {
 export interface AppSettings {
   displayName: string
   propertyName: string
-  basePriceMinor: number
-  secondRoomPriceMinor: number
-  videokePriceMinor: number
+  nightUseAmountMinor: number
+  additionalRoomAmountMinor: number
+  videokeRentalAmountMinor: number
   currency: 'PHP'
 }

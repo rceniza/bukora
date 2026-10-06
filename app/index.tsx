@@ -1,22 +1,27 @@
-import { ScrollView, Text, View } from 'react-native'
+import { Link } from 'expo-router'
+import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { SectionHeading } from '../components/ui/SectionHeading'
 import { SurfaceCard } from '../components/ui/SurfaceCard'
 import { AmountDisplay } from '../components/ui/AmountDisplay'
 import { EmptyState } from '../components/ui/EmptyState'
+import { useAppSettings } from '../src/application/settings/AppSettingsContext'
 
 export default function DashboardScreen() {
+  const { settings } = useAppSettings()
   return (
     <SafeAreaView className="flex-1 bg-canvas">
       <ScrollView contentContainerClassName="mx-auto w-full max-w-2xl gap-6 px-5 py-6">
         <View className="flex-row items-center justify-between">
           <View>
-            <Text className="text-sm font-medium text-muted">CENERE BEACH HOUSE</Text>
-            <Text className="mt-1 text-3xl font-bold text-ink">Bukora</Text>
+            <Text className="text-sm font-medium text-muted">{settings.propertyName.toUpperCase()}</Text>
+            <Text className="mt-1 text-3xl font-bold text-ink">{settings.displayName}</Text>
           </View>
-          <View className="h-11 w-11 items-center justify-center rounded-full bg-cenere-100">
-            <Text className="text-lg font-bold text-cenere-700">C</Text>
-          </View>
+          <Link href="/settings" asChild>
+            <Pressable className="h-11 w-11 items-center justify-center rounded-full bg-cenere-100" accessibilityRole="button" accessibilityLabel="Settings">
+              <Text className="text-lg font-bold text-cenere-700">{settings.propertyName.trim().charAt(0).toUpperCase()}</Text>
+            </Pressable>
+          </Link>
         </View>
 
         <View className="rounded-3xl bg-cenere-600 p-6">

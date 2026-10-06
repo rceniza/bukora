@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { DEFAULT_PRICING_RATES } from '../models/defaults'
 import type { BookingLineItemKind } from '../models'
 
 export interface PricingRates {
@@ -6,12 +7,6 @@ export interface PricingRates {
   additionalRoomAmountMinor: number
   videokeRentalAmountMinor: number
 }
-
-export const DEFAULT_PRICING_RATES: Readonly<PricingRates> = Object.freeze({
-  nightUseAmountMinor: 590000,
-  additionalRoomAmountMinor: 180000,
-  videokeRentalAmountMinor: 80000,
-})
 
 const customItemSchema = z.object({
   kind: z.enum(['custom_charge', 'discount']),

@@ -11,11 +11,19 @@ export class SqliteSettingsRepository implements SettingsRepository {
     )
   }
 
-  async set(setting: SettingRecord): Promise<void> {
-    await this.client.execute(
-      `INSERT INTO app_settings (key, value, updated_at) VALUES (?, ?, ?)
-       ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
-      [setting.key, setting.value, setting.updatedAt],
-    )
+  set(setting: SettingRecord): Promise<void> {
+    return this.setMany([setting])
+  }
+
+  async setMany(settings: SettingRecord[]): Promise<void> {
+    await this.client.transaction(async (transaction) => {
+      for (const setting of settings) {
+        await transaction.execute(
+          `INSERT INTO app_settings (key, value, updated_at) VALUES (?, ?, ?)
+           ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+          [setting.key, setting.value, setting.updatedAt],
+        )
+      }
+    })
   }
 }

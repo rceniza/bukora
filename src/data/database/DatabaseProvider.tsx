@@ -1,6 +1,11 @@
 import { ActivityIndicator, Text, View } from 'react-native'
 import type { ReactNode } from 'react'
 import { useDatabaseMigrations } from './useDatabaseMigrations'
+import { AppSettingsProvider } from '../../application/settings/AppSettingsContext'
+import { SettingsService } from '../../application/services/SettingsService'
+import { settingsRepository } from '../repositories'
+
+const settingsService = new SettingsService(settingsRepository)
 
 export function DatabaseProvider({ children }: { children: ReactNode }) {
   const { success, error } = useDatabaseMigrations()
@@ -22,5 +27,5 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
     )
   }
 
-  return children
+  return <AppSettingsProvider service={settingsService}>{children}</AppSettingsProvider>
 }

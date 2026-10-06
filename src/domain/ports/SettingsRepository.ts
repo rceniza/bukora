@@ -7,4 +7,5 @@ export interface SettingRecord {
 export interface SettingsRepository {
   get(key: string): Promise<SettingRecord | null>
   set(setting: SettingRecord): Promise<void>
+  setMany(settings: SettingRecord[]): Promise<void>
 }
