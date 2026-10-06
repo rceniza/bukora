@@ -1,5 +1,9 @@
 import { ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { SectionHeading } from '../components/ui/SectionHeading'
+import { SurfaceCard } from '../components/ui/SurfaceCard'
+import { AmountDisplay } from '../components/ui/AmountDisplay'
+import { EmptyState } from '../components/ui/EmptyState'
 
 export default function DashboardScreen() {
   return (
@@ -24,24 +28,25 @@ export default function DashboardScreen() {
         </View>
 
         <View className="flex-row gap-3">
-          <View className="flex-1 rounded-2xl bg-white p-4">
+          <SurfaceCard padded={false} className="flex-1 p-4">
             <Text className="text-sm text-muted">Upcoming</Text>
             <Text className="mt-2 text-2xl font-bold text-ink">—</Text>
             <Text className="mt-1 text-xs text-muted">stays</Text>
-          </View>
-          <View className="flex-1 rounded-2xl bg-white p-4">
+          </SurfaceCard>
+          <SurfaceCard padded={false} className="flex-1 p-4">
             <Text className="text-sm text-muted">Balance due</Text>
-            <Text className="mt-2 text-2xl font-bold text-ink">₱0</Text>
+            <AmountDisplay amountMinor={0} emphasis="strong" amountClassName="mt-2 text-2xl" />
             <Text className="mt-1 text-xs text-muted">across bookings</Text>
-          </View>
+          </SurfaceCard>
         </View>
 
-        <View className="gap-3 rounded-2xl bg-white p-5">
-          <Text className="text-lg font-semibold text-ink">Getting started</Text>
-          <Text className="leading-6 text-muted">
-            Your booking calendar and guest records will appear here. This app stores its records on this device and works offline.
-          </Text>
-        </View>
+        <SurfaceCard className="gap-3">
+          <SectionHeading title="Bookings" />
+          <EmptyState
+            title="No bookings yet"
+            message="Your booking calendar and guest records will appear here. Bukora stores its records on this device and works offline."
+          />
+        </SurfaceCard>
       </ScrollView>
     </SafeAreaView>
   )
