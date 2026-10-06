@@ -68,6 +68,6 @@ export class CreateBookingService {
     }
 
     await this.repository.create({ booking, lineItems, initialActivity })
-    return { booking, lineItems, activity: [initialActivity] }
+    return { booking, lineItems, payments: [], activity: [initialActivity] }
   }
 }

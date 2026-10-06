@@ -1,4 +1,4 @@
-import type { BookingActivity, BookingId, BookingLineItem, Booking, UUID } from '../../../domain/models'
+import type { BookingActivity, BookingId, BookingLineItem, BookingPayment, Booking, UUID } from '../../../domain/models'
 import type { BookingAggregate, BookingRepository, CreateBookingRecord } from '../../../domain/ports/BookingRepository'
 import type { SqliteClient } from '../../database/SqliteClient'
 
@@ -19,6 +19,7 @@ interface BookingRow {
 }
 
 type LineItemRow = BookingLineItem
+type PaymentRow = BookingPayment
 
 interface ActivityRow {
   id: UUID
@@ -70,11 +71,17 @@ export class SqliteBookingRepository implements BookingRepository {
     const booking = await this.client.first<BookingRow>(`SELECT ${bookingFields} FROM bookings WHERE id = ?`, [id])
     if (!booking) return null
 
-    const [lineItems, activityRows] = await Promise.all([
+    const [lineItems, payments, activityRows] = await Promise.all([
       this.client.all<LineItemRow>(
         `SELECT id, booking_id AS bookingId, kind, description, quantity,
           unit_amount_minor AS unitAmountMinor, total_amount_minor AS totalAmountMinor,
           created_at AS createdAt FROM booking_line_items WHERE booking_id = ? ORDER BY created_at, id`,
+        [id],
+      ),
+      this.client.all<PaymentRow>(
+        `SELECT id, booking_id AS bookingId, kind, amount_minor AS amountMinor, paid_at AS paidAt,
+          method, transaction_reference AS transactionReference, notes, created_at AS createdAt
+         FROM payments WHERE booking_id = ? ORDER BY paid_at, created_at, id`,
         [id],
       ),
       this.client.all<ActivityRow>(
@@ -88,6 +95,7 @@ export class SqliteBookingRepository implements BookingRepository {
     return {
       booking,
       lineItems,
+      payments,
       activity: activityRows.map(({ detailsJson, ...activity }): BookingActivity => ({
         ...activity,
         details: detailsJson === null ? null : JSON.parse(detailsJson) as Record<string, unknown>,

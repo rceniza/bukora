@@ -3,9 +3,13 @@ import type { ReactNode } from 'react'
 import { useDatabaseMigrations } from './useDatabaseMigrations'
 import { AppSettingsProvider } from '../../application/settings/AppSettingsContext'
 import { SettingsService } from '../../application/services/SettingsService'
+import { DashboardService } from '../../application/services/DashboardService'
+import { DashboardProvider } from '../../application/dashboard/DashboardContext'
 import { settingsRepository } from '../repositories'
+import { dashboardRepository } from '../repositories/dashboardRepository'
 
 const settingsService = new SettingsService(settingsRepository)
+const dashboardService = new DashboardService(dashboardRepository)
 
 export function DatabaseProvider({ children }: { children: ReactNode }) {
   const { success, error } = useDatabaseMigrations()
@@ -27,5 +31,9 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
     )
   }
 
-  return <AppSettingsProvider service={settingsService}>{children}</AppSettingsProvider>
+  return (
+    <AppSettingsProvider service={settingsService}>
+      <DashboardProvider service={dashboardService}>{children}</DashboardProvider>
+    </AppSettingsProvider>
+  )
 }

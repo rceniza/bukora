@@ -1,8 +1,9 @@
-import type { Booking, BookingActivity, BookingLineItem, BookingId } from '../models'
+import type { Booking, BookingActivity, BookingLineItem, BookingPayment, BookingId } from '../models'
 
 export interface BookingAggregate {
   booking: Booking
   lineItems: BookingLineItem[]
+  payments: BookingPayment[]
   activity: BookingActivity[]
 }
 
