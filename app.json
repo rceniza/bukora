@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "Bukora",
+    "slug": "bukora",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "scheme": "bukora",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.rceniza.bukora"
+    },
+    "android": {
+      "edgeToEdgeEnabled": true,
+      "package": "com.rceniza.bukora"
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": ["expo-router"]
+  }
+}
