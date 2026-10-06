@@ -15,6 +15,8 @@ export interface CreateBookingRecord {
 
 export interface BookingRepository {
   create(record: CreateBookingRecord): Promise<void>
+  listAll(): Promise<BookingAggregate[]>
   findById(id: BookingId): Promise<BookingAggregate | null>
+  findOverlaps(checkInDate: string, checkOutDate: string, excludeId?: BookingId): Promise<Booking[]>
   update(booking: Booking): Promise<void>
 }

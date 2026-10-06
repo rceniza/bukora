@@ -38,6 +38,12 @@ const bookingFields = `id, status, guest_name AS guestName, address, cellphone, 
 export class SqliteBookingRepository implements BookingRepository {
   constructor(private readonly client: SqliteClient) {}
 
+  async listAll(): Promise<BookingAggregate[]> {
+    const rows = await this.client.all<{ id: BookingId }>('SELECT id FROM bookings ORDER BY check_in_date, created_at, id')
+    return (await Promise.all(rows.map(({ id }) => this.findById(id))))
+      .filter((booking): booking is BookingAggregate => booking !== null)
+  }
+
   async create({ booking, lineItems, initialActivity }: CreateBookingRecord): Promise<void> {
     await this.client.transaction(async (transaction) => {
       await transaction.execute(
@@ -101,6 +107,17 @@ export class SqliteBookingRepository implements BookingRepository {
         details: detailsJson === null ? null : JSON.parse(detailsJson) as Record<string, unknown>,
       })),
     }
+  }
+
+  findOverlaps(checkInDate: string, checkOutDate: string, excludeId?: BookingId): Promise<Booking[]> {
+    const excludedClause = excludeId ? ' AND id != ?' : ''
+    const values = excludeId ? [checkOutDate, checkInDate, excludeId] : [checkOutDate, checkInDate]
+    return this.client.all<Booking>(
+      `SELECT ${bookingFields} FROM bookings
+       WHERE status IN ('tentative', 'confirmed') AND check_in_date < ? AND check_out_date > ?${excludedClause}
+       ORDER BY check_in_date, guest_name, id`,
+      values,
+    )
   }
 
   async update(booking: Booking): Promise<void> {
