@@ -158,6 +158,7 @@ export default function NewBookingRoute() {
 
     const pricing = { includeSecondRoom, rentVideokeWithOneRoom, customItems: validCustomItems }
     try {
+      setSaving(true)
       const conflicts = await bookingRepository.findOverlaps(checkInDate, checkOutDate)
       if (conflicts.length > 0 && !allowOverlap) {
         setOverlaps(conflicts.map(({ id, guestName, checkInDate: start, checkOutDate: end }) => ({ id, guestName, checkInDate: start, checkOutDate: end })))
@@ -165,7 +166,6 @@ export default function NewBookingRoute() {
       }
 
       setOverlaps([])
-      setSaving(true)
       await createBookingService.create({ booking: bookingInput, pricing })
       await refresh()
       router.replace('/')
@@ -195,8 +195,8 @@ export default function NewBookingRoute() {
 
         <SurfaceCard className="gap-4">
           <Text className="text-lg font-semibold text-ink">Stay dates</Text>
-          <CalendarDateField label="Check-in" value={checkInDate} onChange={(value) => { setCheckInDate(value); setOverlaps([]) }} error={fieldErrors.checkInDate} />
-          <CalendarDateField label="Check-out" value={checkOutDate} onChange={(value) => { setCheckOutDate(value); setOverlaps([]) }} error={fieldErrors.checkOutDate} />
+          <CalendarDateField label="Check-in" value={checkInDate} onChange={(value) => { setCheckInDate(value); setOverlaps([]); setFieldErrors((current) => ({ ...current, checkInDate: '' })) }} error={fieldErrors.checkInDate} />
+          <CalendarDateField label="Check-out" value={checkOutDate} onChange={(value) => { setCheckOutDate(value); setOverlaps([]); setFieldErrors((current) => ({ ...current, checkOutDate: '' })) }} error={fieldErrors.checkOutDate} />
         </SurfaceCard>
 
         <SurfaceCard className="gap-4">

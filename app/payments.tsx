@@ -59,6 +59,7 @@ export default function PaymentsScreen() {
     if (!selected) { setError('Choose a booking first.'); return }
     const amountMinor = parsePHPAmountInput(amount)
     if (amountMinor === null || amountMinor <= 0) { setError('Enter an amount greater than zero.'); return }
+    if (method === 'Other' && !customMethod.trim()) { setError('Enter the payment method.'); return }
     setSaving(true); setError(''); setSuccess('')
     try {
       await service.record(selected.booking.id, {

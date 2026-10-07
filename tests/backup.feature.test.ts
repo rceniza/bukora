@@ -69,6 +69,10 @@ describe('versioned local backup feature', () => {
       expect(() => backup.parse(JSON.stringify({ format: 'bukora-backup', version: 17 }))).toThrow('Backup version 17 is not supported.')
       expect(() => backup.parse(JSON.stringify({ format: 'bukora-backup', version: 1, bookings: [] })))
         .toThrow('This backup is invalid or incomplete. Your current records have not been changed.')
+      const tampered = JSON.parse(await backup.export()) as { bookings: { lineItems: { totalAmountMinor: number }[] }[] }
+      tampered.bookings[0].lineItems[0].totalAmountMinor += 1
+      expect(() => backup.parse(JSON.stringify(tampered)))
+        .toThrow('This backup is invalid or incomplete. Your current records have not been changed.')
       expect((await repository.listAll()).map(({ booking }) => booking.guestName)).toEqual(['Keep This'])
     } finally { database.close() }
   })

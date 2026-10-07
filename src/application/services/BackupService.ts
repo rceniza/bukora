@@ -20,7 +20,15 @@ const lineItemSchema = z.object({
   id: uuidSchema, bookingId: uuidSchema, kind: z.enum(['base_package', 'included_room', 'additional_room', 'videoke', 'custom_charge', 'discount']),
   description: z.string().min(1).max(160), quantity: z.number().int().positive(),
   unitAmountMinor: z.number().int().safe(), totalAmountMinor: z.number().int().safe(), createdAt: z.string().datetime(),
-}).refine((item) => item.totalAmountMinor === item.quantity * item.unitAmountMinor, 'Line item total does not match quantity and unit amount.')
+}).superRefine((item, context) => {
+  const expectedTotal = item.quantity * item.unitAmountMinor
+  if (!Number.isSafeInteger(expectedTotal) || item.totalAmountMinor !== expectedTotal) {
+    context.addIssue({ code: 'custom', path: ['totalAmountMinor'], message: 'Line item total does not match quantity and unit amount.' })
+  }
+  if (item.kind === 'discount' ? item.totalAmountMinor > 0 : item.totalAmountMinor < 0) {
+    context.addIssue({ code: 'custom', path: ['totalAmountMinor'], message: 'Line item sign does not match its charge or discount type.' })
+  }
+})
 const paymentSchema = z.object({
   id: uuidSchema, bookingId: uuidSchema, kind: z.enum(['payment', 'refund']), amountMinor: z.number().int().positive().safe(),
   paidAt: z.string().refine(isValidISODate), method: z.string().min(1).max(48).nullable(),

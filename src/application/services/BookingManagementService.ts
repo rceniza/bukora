@@ -25,8 +25,16 @@ export class BookingManagementService {
     const changedDates = booking.checkInDate !== current.booking.checkInDate || booking.checkOutDate !== current.booking.checkOutDate
     const activity = this.makeActivity(booking, booking.updatedAt, changedDates ? 'booking_rescheduled' : 'booking_updated',
       changedDates ? `Booking dates changed for ${booking.guestName}` : `Booking details updated for ${booking.guestName}`, {
-        previous: { guestName: current.booking.guestName, checkInDate: current.booking.checkInDate, checkOutDate: current.booking.checkOutDate },
-        next: { guestName: booking.guestName, checkInDate: booking.checkInDate, checkOutDate: booking.checkOutDate },
+        previous: {
+          guestName: current.booking.guestName, address: current.booking.address, cellphone: current.booking.cellphone,
+          email: current.booking.email, pax: current.booking.pax, checkInDate: current.booking.checkInDate,
+          checkOutDate: current.booking.checkOutDate, notes: current.booking.notes,
+        },
+        next: {
+          guestName: booking.guestName, address: booking.address, cellphone: booking.cellphone,
+          email: booking.email, pax: booking.pax, checkInDate: booking.checkInDate,
+          checkOutDate: booking.checkOutDate, notes: booking.notes,
+        },
       })
     await this.repository.update(booking, activity)
     return { ...current, booking, activity: [...current.activity, activity] }

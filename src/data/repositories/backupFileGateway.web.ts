@@ -8,7 +8,9 @@ export class WebBackupFileGateway implements BackupFileGateway {
     const anchor = document.createElement('a')
     anchor.href = url
     anchor.download = `bukora-backup-${new Date().toISOString().slice(0, 10)}.json`
+    document.body.appendChild(anchor)
     anchor.click()
+    anchor.remove()
     setTimeout(() => URL.revokeObjectURL(url), 0)
   }
 
