@@ -99,7 +99,7 @@ See [`db/schema.ts`](db/schema.ts) for the authoritative schema and [`drizzle/`]
 ## Requirements
 
 - Node.js 22 LTS (the Docker image uses Node 22).
-- npm, included with Node.js.
+- Bun 1.3.10, pinned in `package.json` and used for installing dependencies and running project scripts.
 - Git to clone the repository.
 - For a native iOS build: macOS with Xcode and its command-line tools.
 - For a native Android build: Android Studio, Android SDK, and a compatible Java/JDK installation.
@@ -109,29 +109,31 @@ You can use the web preview for an initial look without setting up Xcode or Andr
 
 ## Run locally
 
-Clone the repository and install the locked dependencies:
+Install [Node.js 22 LTS](https://nodejs.org/) and [Bun](https://bun.sh/docs/installation) 1.3.10. Check `bun --version` against the version pinned in `package.json`, then clone the repository and install the locked dependencies:
 
 ```sh
 git clone https://github.com/rceniza/bukora.git
 cd bukora
-npm ci
+bun install --frozen-lockfile
 ```
 
 Start the Expo development server:
 
 ```sh
-npm start
+bun run start
 ```
 
 Then use the Expo CLI prompts to open the app in an available simulator, on a connected device with Expo Go where supported, or in a web browser. You can also start a platform directly:
 
 ```sh
-npm run ios       # requires macOS and Xcode
-npm run android   # requires Android Studio, SDK, and Java
-npm run web       # starts the browser preview
+bun run ios       # requires macOS and Xcode
+bun run android   # requires Android Studio, SDK, and Java
+bun run web       # starts the browser preview
 ```
 
 The native `ios` and `android` scripts build and run the native app; having the Expo JavaScript bundle alone is not enough to provide those platforms' native modules.
+
+Bun is the repository's only package manager; `bun.lock` is the committed dependency lockfile. Bun changes how dependencies are installed, not which upstream packages the app depends on. Some packages may still carry deprecation notices in registry metadata even when Bun does not print npm's warnings.
 
 ## Run the web preview with Docker
 
@@ -167,24 +169,24 @@ If your business uses different booking options or eligibility rules, update the
 
 ## Tests and quality checks
 
-Install dependencies first with `npm ci`, then run:
+Install dependencies first with `bun install --frozen-lockfile`, then run:
 
 ```sh
-npm test -- --runInBand  # unit and feature-level Jest tests
-npm run lint             # Expo ESLint checks
-npm run typecheck        # TypeScript check without emitting files
+bun run test -- --runInBand  # unit and feature-level Jest tests
+bun run lint                 # Expo ESLint checks
+bun run typecheck            # TypeScript check without emitting files
 ```
 
 For an interactive test run while developing:
 
 ```sh
-npm run test:watch
+bun run test:watch
 ```
 
 When changing the database schema, generate a migration with:
 
 ```sh
-npm run db:generate
+bun run db:generate
 ```
 
 Review the generated SQL and migration metadata before committing. Add focused tests for domain rules and persistence behavior, plus a feature-level test for the screen or flow affected. Before a release, exercise create, edit, reschedule, cancel, payment, refund, backup, and restore flows on the platforms you intend to distribute. In particular, verify native SQLite and offline behavior in an iOS or Android build; a passing browser test does not verify native storage.
