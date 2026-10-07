@@ -19,4 +19,5 @@ export interface BookingRepository {
   findById(id: BookingId): Promise<BookingAggregate | null>
   findOverlaps(checkInDate: string, checkOutDate: string, excludeId?: BookingId): Promise<Booking[]>
   update(booking: Booking, activity?: BookingActivity): Promise<void>
+  addPayment(payment: BookingPayment, activity: BookingActivity): Promise<void>
 }

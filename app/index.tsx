@@ -47,6 +47,11 @@ export default function DashboardScreen() {
             <Text className="font-semibold text-cenere-700">View all bookings</Text>
           </Pressable>
         </Link>
+        <Link href="/payments" asChild>
+          <Pressable accessibilityRole="button" className="-mt-3 items-center rounded-2xl border border-line bg-white px-4 py-3">
+            <Text className="font-semibold text-ink">Payments and refunds</Text>
+          </Pressable>
+        </Link>
 
         <View className="flex-row gap-3">
           <SurfaceCard padded={false} className="flex-1 p-4">

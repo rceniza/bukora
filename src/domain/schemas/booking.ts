@@ -55,3 +55,4 @@ export const paymentEntrySchema = z.object({
 export type GuestDetailsInput = z.input<typeof guestDetailsSchema>
 export type BookingFormInput = z.input<typeof bookingFormSchema>
 export type BookingFormData = z.output<typeof bookingFormSchema>
+export type PaymentEntryInput = z.input<typeof paymentEntrySchema>

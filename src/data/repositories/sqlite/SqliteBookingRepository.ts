@@ -138,4 +138,21 @@ export class SqliteBookingRepository implements BookingRepository {
       }
     })
   }
+
+  async addPayment(payment: BookingPayment, activity: BookingActivity): Promise<void> {
+    await this.client.transaction(async (transaction) => {
+      await transaction.execute(
+        `INSERT INTO payments (id, booking_id, kind, amount_minor, paid_at, method, transaction_reference, notes, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [payment.id, payment.bookingId, payment.kind, payment.amountMinor, payment.paidAt, payment.method,
+          payment.transactionReference, payment.notes, payment.createdAt],
+      )
+      await transaction.execute(
+        `INSERT INTO booking_activity (id, booking_id, event_type, summary, details_json, created_at)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [activity.id, activity.bookingId, activity.eventType, activity.summary,
+          activity.details === null ? null : JSON.stringify(activity.details), activity.createdAt],
+      )
+    })
+  }
 }

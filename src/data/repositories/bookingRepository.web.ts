@@ -1,4 +1,4 @@
-import type { Booking, BookingActivity, BookingId } from '../../domain/models'
+import type { Booking, BookingActivity, BookingId, BookingPayment } from '../../domain/models'
 import type { BookingAggregate, BookingRepository, CreateBookingRecord } from '../../domain/ports/BookingRepository'
 
 const STORAGE_KEY = 'bukora.bookings'
@@ -41,6 +41,18 @@ export class LocalStorageBookingRepository implements BookingRepository {
     const index = existing.findIndex(({ booking: saved }) => saved.id === booking.id)
     if (index === -1) throw new Error('Booking was not found.')
     existing[index] = { ...existing[index], booking, activity: activity ? [...existing[index].activity, activity] : existing[index].activity }
+    this.write(existing)
+  }
+
+  async addPayment(payment: BookingPayment, activity: BookingActivity): Promise<void> {
+    const existing = this.read()
+    const index = existing.findIndex(({ booking }) => booking.id === payment.bookingId)
+    if (index === -1) throw new Error('Booking was not found.')
+    existing[index] = {
+      ...existing[index],
+      payments: [...existing[index].payments, payment],
+      activity: [...existing[index].activity, activity],
+    }
     this.write(existing)
   }
 }
