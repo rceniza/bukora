@@ -155,4 +155,43 @@ export class SqliteBookingRepository implements BookingRepository {
       )
     })
   }
+
+  async replaceAll(records: BookingAggregate[]): Promise<void> {
+    await this.client.transaction(async (transaction) => {
+      await transaction.execute('DELETE FROM booking_activity')
+      await transaction.execute('DELETE FROM payments')
+      await transaction.execute('DELETE FROM booking_line_items')
+      await transaction.execute('DELETE FROM bookings')
+      for (const { booking, lineItems, payments, activity } of records) {
+        await transaction.execute(
+          `INSERT INTO bookings (${bookingColumns}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [booking.id, booking.status, booking.guestName, booking.address, booking.cellphone, booking.email,
+            booking.pax, booking.checkInDate, booking.checkOutDate, booking.notes, booking.createdAt,
+            booking.updatedAt, booking.cancelledAt],
+        )
+        for (const item of lineItems) {
+          await transaction.execute(
+            `INSERT INTO booking_line_items (id, booking_id, kind, description, quantity, unit_amount_minor, total_amount_minor, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [item.id, item.bookingId, item.kind, item.description, item.quantity, item.unitAmountMinor, item.totalAmountMinor, item.createdAt],
+          )
+        }
+        for (const payment of payments) {
+          await transaction.execute(
+            `INSERT INTO payments (id, booking_id, kind, amount_minor, paid_at, method, transaction_reference, notes, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [payment.id, payment.bookingId, payment.kind, payment.amountMinor, payment.paidAt, payment.method,
+              payment.transactionReference, payment.notes, payment.createdAt],
+          )
+        }
+        for (const item of activity) {
+          await transaction.execute(
+            `INSERT INTO booking_activity (id, booking_id, event_type, summary, details_json, created_at)
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            [item.id, item.bookingId, item.eventType, item.summary, item.details === null ? null : JSON.stringify(item.details), item.createdAt],
+          )
+        }
+      }
+    })
+  }
 }

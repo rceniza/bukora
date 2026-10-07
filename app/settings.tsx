@@ -151,6 +151,13 @@ export default function SettingsScreen() {
           <PrimaryButton label="Save settings" loading={saving} onPress={handleSave} />
           {notice ? <Text className="text-center text-sm text-muted" accessibilityLiveRegion="polite">{notice}</Text> : null}
         </SurfaceCard>
+        <SurfaceCard className="gap-3">
+          <SectionHeading title="Data safety" />
+          <Text className="text-sm leading-5 text-muted">Create a portable backup of your bookings, payments, settings, and activity history.</Text>
+          <Link href="/backup" accessibilityRole="button" className="rounded-2xl border border-cenere-600 px-4 py-3 text-center font-semibold text-cenere-700">
+            Backup and restore
+          </Link>
+        </SurfaceCard>
         </>}
       </ScrollView>
     </SafeAreaView>

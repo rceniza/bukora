@@ -55,6 +55,10 @@ export class LocalStorageBookingRepository implements BookingRepository {
     }
     this.write(existing)
   }
+
+  async replaceAll(bookings: BookingAggregate[]): Promise<void> {
+    this.write(bookings)
+  }
 }
 
 export const bookingRepository: BookingRepository = new LocalStorageBookingRepository()
