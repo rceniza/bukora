@@ -3,20 +3,20 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { format } from 'date-fns'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { CalendarDateField } from '../components/forms/CalendarDateField'
-import { AppTextField } from '../components/ui/AppTextField'
-import { EmptyState } from '../components/ui/EmptyState'
-import { ErrorState } from '../components/ui/ErrorState'
-import { LoadingState } from '../components/ui/LoadingState'
-import { PrimaryButton } from '../components/ui/PrimaryButton'
-import { SurfaceCard } from '../components/ui/SurfaceCard'
-import { PaymentService } from '../src/application/services/PaymentService'
-import { bookingRepository } from '../src/data/repositories/bookingRepository'
-import type { BookingAggregate } from '../src/domain/ports/BookingRepository'
-import type { PaymentKind } from '../src/domain/models'
-import { formatDisplayDate } from '../src/shared/utils/date'
-import { formatPHPAmount } from '../src/shared/utils/money'
-import { parsePHPAmountInput } from '../src/shared/utils/moneyInput'
+import { CalendarDateField } from '../../components/forms/CalendarDateField'
+import { AppTextField } from '../../components/ui/AppTextField'
+import { EmptyState } from '../../components/ui/EmptyState'
+import { ErrorState } from '../../components/ui/ErrorState'
+import { LoadingState } from '../../components/ui/LoadingState'
+import { PrimaryButton } from '../../components/ui/PrimaryButton'
+import { SurfaceCard } from '../../components/ui/SurfaceCard'
+import { PaymentService } from '../../src/application/services/PaymentService'
+import { bookingRepository } from '../../src/data/repositories/bookingRepository'
+import type { BookingAggregate } from '../../src/domain/ports/BookingRepository'
+import type { PaymentKind } from '../../src/domain/models'
+import { formatDisplayDate } from '../../src/shared/utils/date'
+import { formatPHPAmount } from '../../src/shared/utils/money'
+import { parsePHPAmountInput } from '../../src/shared/utils/moneyInput'
 
 const METHODS = ['Cash', 'GCash', 'Maya', 'Bank transfer', 'Other']
 
@@ -74,7 +74,6 @@ export default function PaymentsScreen() {
   }
 
   return <SafeAreaView className="flex-1 bg-canvas"><ScrollView contentContainerClassName="mx-auto w-full max-w-2xl gap-5 px-5 py-6">
-    <Pressable onPress={() => router.back()} accessibilityRole="button"><Text className="font-semibold text-cenere-700">‹ Back</Text></Pressable>
     <View><Text className="text-sm font-medium uppercase text-cenere-700">Money received</Text><Text className="mt-1 text-3xl font-bold text-ink">Payments</Text></View>
     <SurfaceCard className="gap-4"><Text className="text-lg font-semibold text-ink">Record a payment</Text>
       <View className="flex-row gap-2">{(['payment', 'refund'] as const).map((item) => <Pressable key={item} onPress={() => setKind(item)} accessibilityRole="button" accessibilityState={{ selected: kind === item }} className={`rounded-full px-4 py-2 ${kind === item ? 'bg-cenere-600' : 'bg-canvas'}`}><Text className={kind === item ? 'font-semibold text-white' : 'text-ink'}>{item === 'payment' ? 'Payment' : 'Refund'}</Text></Pressable>)}</View>

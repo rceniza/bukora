@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
+    "@expo/vector-icons": "^15.0.3",
     "date-fns": "^4.1.0",
     "drizzle-orm": "^0.45.3",
     "expo": "~54.0.33",

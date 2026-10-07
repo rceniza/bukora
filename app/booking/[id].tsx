@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useLocalSearchParams, useRouter } from 'expo-router'
+import { Link, useLocalSearchParams } from 'expo-router'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { CalendarDateField } from '../../components/forms/CalendarDateField'
@@ -18,6 +18,7 @@ import { bookingFormSchema } from '../../src/domain/schemas/booking'
 import { formatDisplayDate } from '../../src/shared/utils/date'
 import { formatPHPAmount } from '../../src/shared/utils/money'
 import { isUUID } from '../../src/shared/utils/uuid'
+import { BackButton } from '../../components/navigation/BackButton'
 
 function describeActivityDetails(details: Record<string, unknown> | null): string {
   if (!details) return ''
@@ -44,7 +45,6 @@ function describeActivityDetails(details: Record<string, unknown> | null): strin
 
 export default function BookingDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
-  const router = useRouter()
   const bookingId = isUUID(id) ? id as BookingId : null
   const [record, setRecord] = useState<BookingAggregate | null>(null)
   const [loading, setLoading] = useState(true)
@@ -112,14 +112,14 @@ export default function BookingDetailScreen() {
     finally { setSaving(false) }
   }
 
-  if (loading) return <SafeAreaView className="flex-1 bg-canvas p-5"><LoadingState message="Loading booking" /></SafeAreaView>
-  if (!record) return <SafeAreaView className="flex-1 bg-canvas p-5"><ErrorState message={error || 'Booking was not found.'} onRetry={() => void load()} /></SafeAreaView>
+  if (loading) return <SafeAreaView className="flex-1 bg-canvas p-5"><BackButton label="Bookings" fallback="/booking" /><LoadingState message="Loading booking" /></SafeAreaView>
+  if (!record) return <SafeAreaView className="flex-1 bg-canvas p-5"><BackButton label="Bookings" fallback="/booking" /><ErrorState message={error || 'Booking was not found.'} onRetry={() => void load()} /></SafeAreaView>
   const { booking, lineItems, payments, activity } = record
   const total = lineItems.reduce((sum, item) => sum + item.totalAmountMinor, 0)
   const paid = payments.reduce((sum, payment) => sum + (payment.kind === 'refund' ? -payment.amountMinor : payment.amountMinor), 0)
 
   return <SafeAreaView className="flex-1 bg-canvas"><ScrollView contentContainerClassName="mx-auto w-full max-w-2xl gap-5 px-5 py-6">
-    <View className="flex-row items-center justify-between"><Pressable onPress={() => router.back()} accessibilityRole="button"><Text className="font-semibold text-cenere-700">‹ Bookings</Text></Pressable><Text className="text-xs font-semibold uppercase text-cenere-700">{booking.status}</Text></View>
+    <View className="flex-row items-center justify-between"><BackButton label="Bookings" fallback="/booking" /><Text className="text-xs font-semibold uppercase text-cenere-700">{booking.status}</Text></View>
     <View><Text className="text-3xl font-bold text-ink">{booking.guestName}</Text><Text className="mt-1 text-sm text-muted">{formatDisplayDate(booking.checkInDate)} – {formatDisplayDate(booking.checkOutDate)}</Text></View>
     {error ? <ErrorState message={error} /> : null}
     {editing ? <SurfaceCard className="gap-4"><Text className="text-lg font-semibold text-ink">Edit booking</Text><GuestDetailsFields values={guest} errors={fieldErrors} onChange={(field, value) => { setGuest((current) => ({ ...current, [field]: value })); setFieldErrors((current) => ({ ...current, [field]: '' })) }} /><View className="flex-row gap-3"><CalendarDateField label="Check-in" value={checkIn} error={fieldErrors.checkInDate} onChange={(value) => { setCheckIn(value); setFieldErrors((current) => ({ ...current, checkInDate: '' })) }} /><CalendarDateField label="Check-out" value={checkOut} error={fieldErrors.checkOutDate} onChange={(value) => { setCheckOut(value); setFieldErrors((current) => ({ ...current, checkOutDate: '' })) }} /></View><AppTextField label="Booking notes (optional)" value={notes} onChangeText={setNotes} multiline /><PrimaryButton label={saving ? 'Saving…' : 'Save changes'} onPress={() => void saveChanges()} disabled={saving} /><Pressable onPress={() => setEditing(false)} className="items-center p-2"><Text className="font-semibold text-muted">Discard edits</Text></Pressable></SurfaceCard> : <>

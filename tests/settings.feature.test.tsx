@@ -9,8 +9,8 @@ import { SqliteSettingsRepository } from '../src/data/repositories/sqlite/Sqlite
 import { SqliteBookingRepository } from '../src/data/repositories/sqlite/SqliteBookingRepository'
 import type { UUID } from '../src/domain/models'
 import { createMemorySqlite } from './support/memorySqlite'
-import SettingsScreen from '../app/settings'
-import DashboardScreen from '../app/index'
+import SettingsScreen from '../app/(tabs)/settings'
+import DashboardScreen from '../app/(tabs)/index'
 
 jest.mock('expo-router', () => ({
   Link: ({ children }: PropsWithChildren) => children,

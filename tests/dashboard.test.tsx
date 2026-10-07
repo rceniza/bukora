@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react-native'
-import DashboardScreen from '../app/index'
+import DashboardScreen from '../app/(tabs)/index'
 
 describe('DashboardScreen', () => {
   it('shows the Bukora home screen and offline-first introduction', () => {

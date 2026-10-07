@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { addDays, format } from 'date-fns'
-import { Link, useRouter } from 'expo-router'
+import { useRouter } from 'expo-router'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { BookingQuoteSummary } from '../../components/booking/BookingQuoteSummary'
@@ -18,6 +18,7 @@ import { calculateBookingQuote } from '../../src/domain/services/bookingQuote'
 import { bookingRepository } from '../../src/data/repositories/bookingRepository'
 import { formatPHPAmount } from '../../src/shared/utils/money'
 import { parsePHPAmountInput } from '../../src/shared/utils/moneyInput'
+import { BackButton } from '../../components/navigation/BackButton'
 
 interface CustomItemDraft {
   id: number
@@ -184,7 +185,7 @@ export default function NewBookingRoute() {
             <Text className="text-3xl font-bold text-ink">Add a booking</Text>
             <Text className="text-sm text-muted">Record a new stay for {settings.propertyName}.</Text>
           </View>
-          <Link href="/" className="rounded-full bg-white px-4 py-3 text-sm font-semibold text-ink">Cancel</Link>
+          <BackButton label="Cancel" fallback="/booking" />
         </View>
 
         <SurfaceCard className="gap-4">

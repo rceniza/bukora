@@ -9,7 +9,13 @@ export default function RootLayout() {
     <>
       <StatusBar style="dark" />
       <DatabaseProvider>
-        <Stack screenOptions={{ headerShown: false }} />
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="booking/new" />
+          <Stack.Screen name="booking/[id]" />
+          <Stack.Screen name="calendar" />
+          <Stack.Screen name="backup" />
+        </Stack>
       </DatabaseProvider>
     </>
   )

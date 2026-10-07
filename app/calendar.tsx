@@ -9,6 +9,7 @@ import { SurfaceCard } from '../components/ui/SurfaceCard'
 import { bookingRepository } from '../src/data/repositories/bookingRepository'
 import type { BookingAggregate } from '../src/domain/ports/BookingRepository'
 import { formatDisplayDate } from '../src/shared/utils/date'
+import { BackButton } from '../components/navigation/BackButton'
 
 export default function CalendarScreen() {
   const router = useRouter()
@@ -35,7 +36,7 @@ export default function CalendarScreen() {
   const selected = dateMap.get(selectedDay) ?? []
 
   return <SafeAreaView className="flex-1 bg-canvas"><ScrollView contentContainerClassName="mx-auto w-full max-w-2xl gap-5 px-5 py-6">
-    <Pressable onPress={() => router.back()} accessibilityRole="button"><Text className="font-semibold text-cenere-700">‹ Bookings</Text></Pressable>
+    <BackButton label="Bookings" fallback="/booking" />
     <View><Text className="text-sm font-medium uppercase text-cenere-700">Availability</Text><Text className="mt-1 text-3xl font-bold text-ink">Calendar</Text></View>
     <SurfaceCard className="gap-4"><View className="flex-row items-center justify-between"><Pressable onPress={() => { const next = startOfMonth(subMonths(month, 1)); setMonth(next); setSelectedDay(format(next, 'yyyy-MM-dd')) }} accessibilityLabel="Previous month" accessibilityRole="button" className="rounded-full bg-canvas px-4 py-2"><Text>‹</Text></Pressable><Text className="text-lg font-semibold text-ink">{format(month, 'MMMM yyyy')}</Text><Pressable onPress={() => { const next = startOfMonth(addMonths(month, 1)); setMonth(next); setSelectedDay(format(next, 'yyyy-MM-dd')) }} accessibilityLabel="Next month" accessibilityRole="button" className="rounded-full bg-canvas px-4 py-2"><Text>›</Text></Pressable></View>
       <View className="flex-row">{['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => <Text key={`${day}-${index}`} className="w-[14.28%] py-2 text-center text-xs font-medium text-muted">{day}</Text>)}</View>
