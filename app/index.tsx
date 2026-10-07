@@ -42,6 +42,11 @@ export default function DashboardScreen() {
         <Link href="/booking/new" asChild>
           <PrimaryButton label="Add booking" />
         </Link>
+        <Link href="/booking" asChild>
+          <Pressable accessibilityRole="button" className="-mt-3 items-center rounded-2xl border border-cenere-600 px-4 py-3">
+            <Text className="font-semibold text-cenere-700">View all bookings</Text>
+          </Pressable>
+        </Link>
 
         <View className="flex-row gap-3">
           <SurfaceCard padded={false} className="flex-1 p-4">

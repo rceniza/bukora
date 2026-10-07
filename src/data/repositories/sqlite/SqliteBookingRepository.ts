@@ -120,12 +120,22 @@ export class SqliteBookingRepository implements BookingRepository {
     )
   }
 
-  async update(booking: Booking): Promise<void> {
-    await this.client.execute(
-      `UPDATE bookings SET status = ?, guest_name = ?, address = ?, cellphone = ?, email = ?, pax = ?,
-       check_in_date = ?, check_out_date = ?, notes = ?, updated_at = ?, cancelled_at = ? WHERE id = ?`,
-      [booking.status, booking.guestName, booking.address, booking.cellphone, booking.email, booking.pax,
-        booking.checkInDate, booking.checkOutDate, booking.notes, booking.updatedAt, booking.cancelledAt, booking.id],
-    )
+  async update(booking: Booking, activity?: BookingActivity): Promise<void> {
+    await this.client.transaction(async (transaction) => {
+      await transaction.execute(
+        `UPDATE bookings SET status = ?, guest_name = ?, address = ?, cellphone = ?, email = ?, pax = ?,
+         check_in_date = ?, check_out_date = ?, notes = ?, updated_at = ?, cancelled_at = ? WHERE id = ?`,
+        [booking.status, booking.guestName, booking.address, booking.cellphone, booking.email, booking.pax,
+          booking.checkInDate, booking.checkOutDate, booking.notes, booking.updatedAt, booking.cancelledAt, booking.id],
+      )
+      if (activity) {
+        await transaction.execute(
+          `INSERT INTO booking_activity (id, booking_id, event_type, summary, details_json, created_at)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+          [activity.id, activity.bookingId, activity.eventType, activity.summary,
+            activity.details === null ? null : JSON.stringify(activity.details), activity.createdAt],
+        )
+      }
+    })
   }
 }
