@@ -12,7 +12,7 @@ const emptyValues: GuestDetailsValues = {
 describe('GuestDetailsFields', () => {
   it('connects accessible guest fields to the form value handler', () => {
     const onChange = jest.fn()
-    render(<GuestDetailsFields values={emptyValues} onChange={onChange} />)
+    render(<GuestDetailsFields values={emptyValues} onChange={onChange} phoneCountryCode="PH" onPhoneCountryCodeChange={() => {}} />)
 
     fireEvent.changeText(screen.getByLabelText('Guest name'), 'Mia Cruz')
     fireEvent.changeText(screen.getByLabelText('Number of guests (pax)'), '12')
@@ -23,7 +23,7 @@ describe('GuestDetailsFields', () => {
   })
 
   it('renders the validation message for an invalid field', () => {
-    render(<GuestDetailsFields values={emptyValues} errors={{ cellphone: 'Enter a valid cellphone number.' }} onChange={() => {}} />)
+    render(<GuestDetailsFields values={emptyValues} errors={{ cellphone: 'Enter a valid cellphone number.' }} onChange={() => {}} phoneCountryCode="PH" onPhoneCountryCodeChange={() => {}} />)
 
     expect(screen.getByRole('alert')).toHaveTextContent('Enter a valid cellphone number.')
   })

@@ -16,6 +16,7 @@ import type { BookingAggregate } from '../../src/domain/ports/BookingRepository'
 import type { BookingId } from '../../src/domain/models'
 import { bookingFormSchema } from '../../src/domain/schemas/booking'
 import { checkoutAfterChangingCheckIn, formatDisplayDate, minimumCheckoutDate } from '../../src/shared/utils/date'
+import { getPhoneInputFromStoredValue, normalizePhoneNumber, type PhoneCountryCode } from '../../src/shared/utils/phone'
 import { formatPHPAmount } from '../../src/shared/utils/money'
 import { isUUID } from '../../src/shared/utils/uuid'
 import { BackButton } from '../../components/navigation/BackButton'
@@ -55,6 +56,7 @@ export default function BookingDetailScreen() {
   const [confirmCancel, setConfirmCancel] = useState(false)
   const [reason, setReason] = useState('')
   const [guest, setGuest] = useState<GuestDetailsValues>({ guestName: '', address: '', cellphone: '', email: '', pax: '' })
+  const [phoneCountryCode, setPhoneCountryCode] = useState<PhoneCountryCode>('PH')
   const [checkIn, setCheckIn] = useState('')
   const [checkOut, setCheckOut] = useState('')
   const [notes, setNotes] = useState('')
@@ -74,7 +76,9 @@ export default function BookingDetailScreen() {
       setRecord(found)
       if (found) {
         const { booking } = found
-        setGuest({ guestName: booking.guestName, address: booking.address ?? '', cellphone: booking.cellphone, email: booking.email ?? '', pax: booking.pax ? String(booking.pax) : '' })
+        const phoneInput = getPhoneInputFromStoredValue(booking.cellphone)
+        setPhoneCountryCode(phoneInput.countryCode)
+        setGuest({ guestName: booking.guestName, address: booking.address ?? '', cellphone: phoneInput.nationalNumber, email: booking.email ?? '', pax: booking.pax ? String(booking.pax) : '' })
         setCheckIn(booking.checkInDate); setCheckOut(booking.checkOutDate); setNotes(booking.notes ?? '')
       }
       setError('')
@@ -99,7 +103,7 @@ export default function BookingDetailScreen() {
         setSaving(false)
         return
       }
-      const updated = await service.updateDetails(record.booking.id, input)
+      const updated = await service.updateDetails(record.booking.id, { ...input, cellphone: normalizePhoneNumber(guest.cellphone, phoneCountryCode) })
       setFieldErrors({})
       setRecord(updated); setEditing(false)
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Changes could not be saved.') }
@@ -123,7 +127,7 @@ export default function BookingDetailScreen() {
     <View className="flex-row items-center justify-between"><BackButton label="Bookings" fallback="/booking" /><Text className="text-xs font-semibold uppercase text-cenere-700">{booking.status}</Text></View>
     <View><Text className="text-3xl font-bold text-ink">{booking.guestName}</Text><Text className="mt-1 text-sm text-muted">{formatDisplayDate(booking.checkInDate)} – {formatDisplayDate(booking.checkOutDate)}</Text></View>
     {error ? <ErrorState message={error} /> : null}
-    {editing ? <SurfaceCard className="gap-4"><Text className="text-lg font-semibold text-ink">Edit booking</Text><GuestDetailsFields values={guest} errors={fieldErrors} onChange={(field, value) => { setGuest((current) => ({ ...current, [field]: value })); setFieldErrors((current) => ({ ...current, [field]: '' })) }} /><View className="flex-row gap-3"><CalendarDateField label="Check-in" value={checkIn} error={fieldErrors.checkInDate} onChange={(value) => { setCheckOut((current) => checkoutAfterChangingCheckIn(checkIn, current, value)); setCheckIn(value); setFieldErrors((current) => ({ ...current, checkInDate: '', checkOutDate: '' })) }} /><CalendarDateField label="Check-out" value={checkOut} minimumDate={minimumCheckoutDate(checkIn) ?? undefined} error={fieldErrors.checkOutDate} onChange={(value) => { setCheckOut(value); setFieldErrors((current) => ({ ...current, checkOutDate: '' })) }} /></View><AppTextField label="Booking notes (optional)" value={notes} onChangeText={setNotes} multiline /><PrimaryButton label={saving ? 'Saving…' : 'Save changes'} onPress={() => void saveChanges()} disabled={saving} /><Pressable onPress={() => setEditing(false)} className="items-center p-2"><Text className="font-semibold text-muted">Discard edits</Text></Pressable></SurfaceCard> : <>
+    {editing ? <SurfaceCard className="gap-4"><Text className="text-lg font-semibold text-ink">Edit booking</Text><GuestDetailsFields values={guest} errors={fieldErrors} phoneCountryCode={phoneCountryCode} onPhoneCountryCodeChange={setPhoneCountryCode} onChange={(field, value) => { setGuest((current) => ({ ...current, [field]: value })); setFieldErrors((current) => ({ ...current, [field]: '' })) }} /><View className="flex-row gap-3"><CalendarDateField label="Check-in" value={checkIn} error={fieldErrors.checkInDate} onChange={(value) => { setCheckOut((current) => checkoutAfterChangingCheckIn(checkIn, current, value)); setCheckIn(value); setFieldErrors((current) => ({ ...current, checkInDate: '', checkOutDate: '' })) }} /><CalendarDateField label="Check-out" value={checkOut} minimumDate={minimumCheckoutDate(checkIn) ?? undefined} error={fieldErrors.checkOutDate} onChange={(value) => { setCheckOut(value); setFieldErrors((current) => ({ ...current, checkOutDate: '' })) }} /></View><AppTextField label="Booking notes (optional)" value={notes} onChangeText={setNotes} multiline /><PrimaryButton label={saving ? 'Saving…' : 'Save changes'} onPress={() => void saveChanges()} disabled={saving} /><Pressable onPress={() => setEditing(false)} className="items-center p-2"><Text className="font-semibold text-muted">Discard edits</Text></Pressable></SurfaceCard> : <>
       <SurfaceCard className="gap-3"><View className="flex-row justify-between"><Text className="text-sm text-muted">Cellphone</Text><Text className="text-sm font-medium text-ink">{booking.cellphone}</Text></View><View className="flex-row justify-between"><Text className="text-sm text-muted">Address</Text><Text className="max-w-[65%] text-right text-sm font-medium text-ink">{booking.address || '—'}</Text></View><View className="flex-row justify-between"><Text className="text-sm text-muted">Guests</Text><Text className="text-sm font-medium text-ink">{booking.pax} pax</Text></View>{booking.email ? <View className="flex-row justify-between"><Text className="text-sm text-muted">Email</Text><Text className="text-sm font-medium text-ink">{booking.email}</Text></View> : null}{booking.notes ? <Text className="text-sm text-muted">{booking.notes}</Text> : null}</SurfaceCard>
       <SurfaceCard className="gap-3"><Text className="text-lg font-semibold text-ink">Price and payments</Text>{lineItems.map((item) => <View key={item.id} className="flex-row justify-between"><Text className="flex-1 text-sm text-muted">{item.description}</Text><Text className="text-sm text-ink">{formatPHPAmount(item.totalAmountMinor)}</Text></View>)}<View className="border-t border-line pt-3"><View className="flex-row justify-between"><Text className="font-medium text-ink">Total</Text><Text className="font-semibold text-ink">{formatPHPAmount(total)}</Text></View><View className="mt-2 flex-row justify-between"><Text className="text-sm text-muted">Paid</Text><Text className="text-sm text-cenere-700">{formatPHPAmount(paid)}</Text></View><View className="mt-2 flex-row justify-between"><Text className="text-sm text-muted">Balance due</Text><Text className="text-sm font-semibold text-ink">{formatPHPAmount(total - paid)}</Text></View></View>{payments.length === 0 ? <Text className="text-sm text-muted">No payments recorded yet.</Text> : payments.map((payment) => <Text key={payment.id} className="text-sm text-muted">{formatDisplayDate(payment.paidAt)} · {payment.transactionReference || payment.method || payment.kind} · {payment.kind === 'refund' ? '−' : '+'}{formatPHPAmount(payment.amountMinor)}</Text>)}<Link href={{ pathname: '/payments', params: { bookingId: booking.id } }} asChild><Pressable accessibilityRole="button"><Text className="font-semibold text-cenere-700">Record a payment or refund →</Text></Pressable></Link></SurfaceCard>
       {booking.status !== 'cancelled' ? <SurfaceCard className="gap-3"><PrimaryButton label="Edit details or dates" onPress={() => setEditing(true)} />{confirmCancel ? <><AppTextField label="Cancellation reason (optional)" value={reason} onChangeText={setReason} /><PrimaryButton label={saving ? 'Cancelling…' : 'Confirm cancellation'} onPress={() => void cancelBooking()} disabled={saving} /><Pressable onPress={() => setConfirmCancel(false)} className="items-center p-2"><Text className="font-semibold text-muted">Keep booking</Text></Pressable></> : <Pressable onPress={() => setConfirmCancel(true)} accessibilityRole="button" className="items-center rounded-2xl border border-amber-300 p-3"><Text className="font-semibold text-amber-800">Cancel booking</Text></Pressable>}</SurfaceCard> : null}

@@ -1,4 +1,6 @@
 import { AppTextField } from '../ui/AppTextField'
+import { PhoneNumberField } from './PhoneNumberField'
+import type { PhoneCountryCode } from '../../src/shared/utils/phone'
 
 export interface GuestDetailsValues {
   guestName: string
@@ -12,9 +14,11 @@ interface GuestDetailsFieldsProps {
   values: GuestDetailsValues
   errors?: Partial<Record<keyof GuestDetailsValues, string>>
   onChange: (field: keyof GuestDetailsValues, value: string) => void
+  phoneCountryCode: PhoneCountryCode
+  onPhoneCountryCodeChange: (countryCode: PhoneCountryCode) => void
 }
 
-export function GuestDetailsFields({ values, errors = {}, onChange }: GuestDetailsFieldsProps) {
+export function GuestDetailsFields({ values, errors = {}, onChange, phoneCountryCode, onPhoneCountryCodeChange }: GuestDetailsFieldsProps) {
   return (
     <>
       <AppTextField
@@ -25,13 +29,12 @@ export function GuestDetailsFields({ values, errors = {}, onChange }: GuestDetai
         autoCapitalize="words"
         autoComplete="name"
       />
-      <AppTextField
-        label="Cellphone number"
+      <PhoneNumberField
         value={values.cellphone}
         onChangeText={(value) => onChange('cellphone', value)}
+        countryCode={phoneCountryCode}
+        onCountryCodeChange={onPhoneCountryCodeChange}
         error={errors.cellphone}
-        keyboardType="phone-pad"
-        autoComplete="tel"
       />
       <AppTextField
         label="Address"

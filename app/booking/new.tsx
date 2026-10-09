@@ -20,6 +20,7 @@ import { bookingRepository } from '../../src/data/repositories/bookingRepository
 import { formatPHPAmount } from '../../src/shared/utils/money'
 import { parsePHPAmountInput } from '../../src/shared/utils/moneyInput'
 import { checkoutAfterChangingCheckIn, minimumCheckoutDate } from '../../src/shared/utils/date'
+import { normalizePhoneNumber, type PhoneCountryCode } from '../../src/shared/utils/phone'
 import { BackButton } from '../../components/navigation/BackButton'
 import { FormScrollView } from '../../components/forms/FormScrollView'
 
@@ -71,6 +72,7 @@ export default function NewBookingRoute() {
   const { settings } = useAppSettings()
   const { refresh } = useDashboard()
   const [guest, setGuest] = useState<GuestDetailsValues>({ guestName: '', address: '', cellphone: '', email: '', pax: '' })
+  const [phoneCountryCode, setPhoneCountryCode] = useState<PhoneCountryCode>('PH')
   const [checkInDate, setCheckInDate] = useState(todayISO)
   const [checkOutDate, setCheckOutDate] = useState(() => format(addDays(new Date(), 1), 'yyyy-MM-dd'))
   const [notes, setNotes] = useState('')
@@ -133,7 +135,7 @@ export default function NewBookingRoute() {
     const bookingInput = {
       guestName: guest.guestName,
       address: guest.address,
-      cellphone: guest.cellphone,
+      cellphone: normalizePhoneNumber(guest.cellphone, phoneCountryCode),
       email: guest.email,
       pax: paxValue,
       checkInDate,
@@ -200,7 +202,7 @@ export default function NewBookingRoute() {
 
         <SurfaceCard className="gap-4">
           <Text className="text-lg font-semibold text-ink">Guest details</Text>
-          <GuestDetailsFields values={guest} errors={fieldErrors} onChange={changeGuest} />
+          <GuestDetailsFields values={guest} errors={fieldErrors} onChange={changeGuest} phoneCountryCode={phoneCountryCode} onPhoneCountryCodeChange={setPhoneCountryCode} />
           <AppTextField label="Booking notes (optional)" value={notes} onChangeText={setNotes} multiline numberOfLines={3} textAlignVertical="top" />
         </SurfaceCard>
 
