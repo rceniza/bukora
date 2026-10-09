@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { format } from 'date-fns'
-import { Link, useRouter } from 'expo-router'
+import { Link, useFocusEffect, useRouter } from 'expo-router'
 import { Pressable, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { AppTextField } from '../../components/ui/AppTextField'
@@ -31,7 +31,7 @@ export default function BookingListScreen() {
     catch { setError(true) }
     finally { setLoading(false) }
   }, [])
-  useEffect(() => { void load() }, [load])
+  useFocusEffect(useCallback(() => { void load() }, [load]))
   const visible = useMemo(() => {
     const today = format(new Date(), 'yyyy-MM-dd')
     const normalized = query.trim().toLocaleLowerCase()
