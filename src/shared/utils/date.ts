@@ -1,4 +1,4 @@
-import { format, isValid, parse } from 'date-fns'
+import { addDays, differenceInCalendarDays, format, isValid, parse } from 'date-fns'
 
 const ISO_DATE_FORMAT = 'yyyy-MM-dd'
 
@@ -15,6 +15,23 @@ export function isDateRangeValid(checkInDate: string, checkOutDate: string): boo
   return isValidISODate(checkInDate)
     && isValidISODate(checkOutDate)
     && checkOutDate > checkInDate
+}
+
+export function checkoutAfterChangingCheckIn(
+  currentCheckInDate: string,
+  currentCheckOutDate: string,
+  nextCheckInDate: string,
+): string {
+  const currentCheckIn = parseISODate(currentCheckInDate)
+  const currentCheckOut = parseISODate(currentCheckOutDate)
+  const nextCheckIn = parseISODate(nextCheckInDate)
+  if (!nextCheckIn) return currentCheckOutDate
+
+  const currentNights = currentCheckIn && currentCheckOut
+    ? differenceInCalendarDays(currentCheckOut, currentCheckIn)
+    : 0
+  const nights = currentNights > 0 ? currentNights : 1
+  return format(addDays(nextCheckIn, nights), ISO_DATE_FORMAT)
 }
 
 export function formatDisplayDate(value: string): string {

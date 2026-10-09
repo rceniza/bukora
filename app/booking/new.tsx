@@ -18,6 +18,7 @@ import { calculateBookingQuote } from '../../src/domain/services/bookingQuote'
 import { bookingRepository } from '../../src/data/repositories/bookingRepository'
 import { formatPHPAmount } from '../../src/shared/utils/money'
 import { parsePHPAmountInput } from '../../src/shared/utils/moneyInput'
+import { checkoutAfterChangingCheckIn } from '../../src/shared/utils/date'
 import { BackButton } from '../../components/navigation/BackButton'
 
 interface CustomItemDraft {
@@ -105,6 +106,13 @@ export default function NewBookingRoute() {
   function changeGuest(field: keyof GuestDetailsValues, value: string) {
     setGuest((current) => ({ ...current, [field]: value }))
     setFieldErrors((current) => ({ ...current, [field]: '' }))
+  }
+
+  function changeCheckInDate(value: string) {
+    setCheckOutDate((currentCheckOut) => checkoutAfterChangingCheckIn(checkInDate, currentCheckOut, value))
+    setCheckInDate(value)
+    setOverlaps([])
+    setFieldErrors((current) => ({ ...current, checkInDate: '', checkOutDate: '' }))
   }
 
   function updateCustomItem(id: number, patch: Partial<CustomItemDraft>) {
@@ -196,7 +204,7 @@ export default function NewBookingRoute() {
 
         <SurfaceCard className="gap-4">
           <Text className="text-lg font-semibold text-ink">Stay dates</Text>
-          <CalendarDateField label="Check-in" value={checkInDate} onChange={(value) => { setCheckInDate(value); setOverlaps([]); setFieldErrors((current) => ({ ...current, checkInDate: '' })) }} error={fieldErrors.checkInDate} />
+          <CalendarDateField label="Check-in" value={checkInDate} onChange={changeCheckInDate} error={fieldErrors.checkInDate} />
           <CalendarDateField label="Check-out" value={checkOutDate} onChange={(value) => { setCheckOutDate(value); setOverlaps([]); setFieldErrors((current) => ({ ...current, checkOutDate: '' })) }} error={fieldErrors.checkOutDate} />
         </SurfaceCard>
 

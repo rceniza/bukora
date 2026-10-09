@@ -1,4 +1,4 @@
-import { formatDisplayDate, isDateRangeValid, isValidISODate } from './date'
+import { checkoutAfterChangingCheckIn, formatDisplayDate, isDateRangeValid, isValidISODate } from './date'
 
 describe('date utilities', () => {
   it('accepts valid ISO dates and rejects impossible dates', () => {
@@ -16,5 +16,14 @@ describe('date utilities', () => {
   it('formats valid dates and leaves invalid input visible for correction', () => {
     expect(formatDisplayDate('2026-06-12')).toBe('Jun 12, 2026')
     expect(formatDisplayDate('not-a-date')).toBe('not-a-date')
+  })
+
+  it('moves checkout with check-in while preserving the selected number of nights', () => {
+    expect(checkoutAfterChangingCheckIn('2026-06-12', '2026-06-13', '2026-07-20')).toBe('2026-07-21')
+    expect(checkoutAfterChangingCheckIn('2026-06-12', '2026-06-15', '2026-07-20')).toBe('2026-07-23')
+  })
+
+  it('uses a one-night stay if the current date range is invalid', () => {
+    expect(checkoutAfterChangingCheckIn('2026-06-12', '2026-06-12', '2026-07-20')).toBe('2026-07-21')
   })
 })
