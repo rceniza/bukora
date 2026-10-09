@@ -6,7 +6,10 @@ const STORAGE_KEY = 'bukora.bookings'
 export class LocalStorageBookingRepository implements BookingRepository {
   private read(): BookingAggregate[] {
     const raw = globalThis.localStorage.getItem(STORAGE_KEY)
-    return raw ? JSON.parse(raw) as BookingAggregate[] : []
+    return raw ? (JSON.parse(raw) as BookingAggregate[]).map((record) => ({
+      ...record,
+      booking: { ...record.booking, confirmationDepositAmountMinor: record.booking.confirmationDepositAmountMinor ?? 0 },
+    })) : []
   }
 
   private write(bookings: BookingAggregate[]): void {
@@ -44,14 +47,15 @@ export class LocalStorageBookingRepository implements BookingRepository {
     this.write(existing)
   }
 
-  async addPayment(payment: BookingPayment, activity: BookingActivity): Promise<void> {
+  async addPayment(payment: BookingPayment, activities: BookingActivity[], bookingUpdate?: Booking): Promise<void> {
     const existing = this.read()
     const index = existing.findIndex(({ booking }) => booking.id === payment.bookingId)
     if (index === -1) throw new Error('Booking was not found.')
     existing[index] = {
       ...existing[index],
+      booking: bookingUpdate ?? existing[index].booking,
       payments: [...existing[index].payments, payment],
-      activity: [...existing[index].activity, activity],
+      activity: [...existing[index].activity, ...activities],
     }
     this.write(existing)
   }

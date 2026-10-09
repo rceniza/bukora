@@ -5,6 +5,7 @@ import type { SqliteClient } from '../../database/SqliteClient'
 interface BookingRow {
   id: UUID
   status: Booking['status']
+  confirmationDepositAmountMinor: number
   guestName: string
   address: string | null
   cellphone: string
@@ -30,8 +31,8 @@ interface ActivityRow {
   createdAt: string
 }
 
-const bookingColumns = 'id, status, guest_name, address, cellphone, email, pax, check_in_date, check_out_date, notes, created_at, updated_at, cancelled_at'
-const bookingFields = `id, status, guest_name AS guestName, address, cellphone, email, pax,
+const bookingColumns = 'id, status, confirmation_deposit_amount_minor, guest_name, address, cellphone, email, pax, check_in_date, check_out_date, notes, created_at, updated_at, cancelled_at'
+const bookingFields = `id, status, confirmation_deposit_amount_minor AS confirmationDepositAmountMinor, guest_name AS guestName, address, cellphone, email, pax,
   check_in_date AS checkInDate, check_out_date AS checkOutDate, notes,
   created_at AS createdAt, updated_at AS updatedAt, cancelled_at AS cancelledAt`
 
@@ -48,8 +49,8 @@ export class SqliteBookingRepository implements BookingRepository {
     await this.client.transaction(async (transaction) => {
       await transaction.execute(
         `INSERT INTO bookings (${bookingColumns})
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [booking.id, booking.status, booking.guestName, booking.address, booking.cellphone, booking.email,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [booking.id, booking.status, booking.confirmationDepositAmountMinor, booking.guestName, booking.address, booking.cellphone, booking.email,
           booking.pax, booking.checkInDate, booking.checkOutDate, booking.notes, booking.createdAt,
           booking.updatedAt, booking.cancelledAt],
       )
@@ -123,9 +124,9 @@ export class SqliteBookingRepository implements BookingRepository {
   async update(booking: Booking, activity?: BookingActivity): Promise<void> {
     await this.client.transaction(async (transaction) => {
       await transaction.execute(
-        `UPDATE bookings SET status = ?, guest_name = ?, address = ?, cellphone = ?, email = ?, pax = ?,
+        `UPDATE bookings SET status = ?, confirmation_deposit_amount_minor = ?, guest_name = ?, address = ?, cellphone = ?, email = ?, pax = ?,
          check_in_date = ?, check_out_date = ?, notes = ?, updated_at = ?, cancelled_at = ? WHERE id = ?`,
-        [booking.status, booking.guestName, booking.address, booking.cellphone, booking.email, booking.pax,
+        [booking.status, booking.confirmationDepositAmountMinor, booking.guestName, booking.address, booking.cellphone, booking.email, booking.pax,
           booking.checkInDate, booking.checkOutDate, booking.notes, booking.updatedAt, booking.cancelledAt, booking.id],
       )
       if (activity) {
@@ -139,7 +140,7 @@ export class SqliteBookingRepository implements BookingRepository {
     })
   }
 
-  async addPayment(payment: BookingPayment, activity: BookingActivity): Promise<void> {
+  async addPayment(payment: BookingPayment, activities: BookingActivity[], bookingUpdate?: Booking): Promise<void> {
     await this.client.transaction(async (transaction) => {
       await transaction.execute(
         `INSERT INTO payments (id, booking_id, kind, amount_minor, paid_at, method, transaction_reference, notes, created_at)
@@ -147,12 +148,18 @@ export class SqliteBookingRepository implements BookingRepository {
         [payment.id, payment.bookingId, payment.kind, payment.amountMinor, payment.paidAt, payment.method,
           payment.transactionReference, payment.notes, payment.createdAt],
       )
-      await transaction.execute(
-        `INSERT INTO booking_activity (id, booking_id, event_type, summary, details_json, created_at)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [activity.id, activity.bookingId, activity.eventType, activity.summary,
-          activity.details === null ? null : JSON.stringify(activity.details), activity.createdAt],
-      )
+      if (bookingUpdate) {
+        await transaction.execute('UPDATE bookings SET status = ?, updated_at = ? WHERE id = ?',
+          [bookingUpdate.status, bookingUpdate.updatedAt, bookingUpdate.id])
+      }
+      for (const activity of activities) {
+        await transaction.execute(
+          `INSERT INTO booking_activity (id, booking_id, event_type, summary, details_json, created_at)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+          [activity.id, activity.bookingId, activity.eventType, activity.summary,
+            activity.details === null ? null : JSON.stringify(activity.details), activity.createdAt],
+        )
+      }
     })
   }
 
@@ -164,8 +171,8 @@ export class SqliteBookingRepository implements BookingRepository {
       await transaction.execute('DELETE FROM bookings')
       for (const { booking, lineItems, payments, activity } of records) {
         await transaction.execute(
-          `INSERT INTO bookings (${bookingColumns}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [booking.id, booking.status, booking.guestName, booking.address, booking.cellphone, booking.email,
+          `INSERT INTO bookings (${bookingColumns}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [booking.id, booking.status, booking.confirmationDepositAmountMinor, booking.guestName, booking.address, booking.cellphone, booking.email,
             booking.pax, booking.checkInDate, booking.checkOutDate, booking.notes, booking.createdAt,
             booking.updatedAt, booking.cancelledAt],
         )

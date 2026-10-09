@@ -8,6 +8,7 @@ function aggregate(id: string, date: string, status: DashboardBookingSnapshot['b
     booking: {
       id: bookingId,
       status,
+      confirmationDepositAmountMinor: 100000,
       guestName: `Guest ${id.slice(-1)}`,
       address: null,
       cellphone: '09171234567',

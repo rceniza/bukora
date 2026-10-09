@@ -5,6 +5,7 @@ import type { BookingQuoteOptions, PricingRates } from '../../domain/services/bo
 import type { Booking, BookingActivity, BookingLineItem, UUID } from '../../domain/models'
 import { createUUID } from '../../shared/utils/uuid'
 import type { BookingAggregate, BookingRepository } from '../../domain/ports/BookingRepository'
+import { DEFAULT_APP_SETTINGS } from '../../domain/models/defaults'
 
 export interface CreateBookingCommand {
   booking: BookingFormInput
@@ -14,17 +15,23 @@ export interface CreateBookingCommand {
 export interface CreateBookingServiceDependencies {
   repository: BookingRepository
   rates?: PricingRates
+  confirmationDepositAmountMinor?: number
   createId?: () => UUID
   now?: () => string
 }
 
 export class CreateBookingService {
   private readonly rates?: PricingRates
+  private readonly confirmationDepositAmountMinor: number
   private readonly createId: () => UUID
   private readonly now: () => string
 
   constructor(private readonly repository: BookingRepository, dependencies: Omit<CreateBookingServiceDependencies, 'repository'> = {}) {
     this.rates = dependencies.rates
+    this.confirmationDepositAmountMinor = dependencies.confirmationDepositAmountMinor ?? DEFAULT_APP_SETTINGS.confirmationDepositAmountMinor
+    if (!Number.isSafeInteger(this.confirmationDepositAmountMinor) || this.confirmationDepositAmountMinor < 0) {
+      throw new RangeError('The confirmation deposit must be a nonnegative safe integer amount.')
+    }
     this.createId = dependencies.createId ?? createUUID
     this.now = dependencies.now ?? (() => new Date().toISOString())
   }
@@ -35,7 +42,8 @@ export class CreateBookingService {
     const createdAt = this.now()
     const booking: Booking = {
       id: this.createId(),
-      status: 'confirmed',
+      status: this.confirmationDepositAmountMinor === 0 ? 'confirmed' : 'tentative',
+      confirmationDepositAmountMinor: this.confirmationDepositAmountMinor,
       guestName: guest.guestName,
       address: guest.address,
       cellphone: guest.cellphone,
@@ -60,6 +68,8 @@ export class CreateBookingService {
       eventType: 'booking_created',
       summary: `Booking created for ${booking.guestName}`,
       details: {
+        status: booking.status,
+        confirmationDepositAmountMinor: booking.confirmationDepositAmountMinor,
         checkInDate: booking.checkInDate,
         checkOutDate: booking.checkOutDate,
         totalAmountMinor: quote.totalAmountMinor,

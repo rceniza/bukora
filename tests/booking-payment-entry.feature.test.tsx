@@ -12,7 +12,7 @@ const bookingId = '10000000-0000-4000-8000-000000000001' as BookingId
 const record: BookingAggregate = {
   booking: {
     id: bookingId, guestName: 'Mia Cruz', address: null, cellphone: '+639171234567', email: null,
-    checkInDate: '2026-11-01', checkOutDate: '2026-11-02', notes: null, pax: 0, status: 'confirmed', createdAt: '2026-10-01T10:00:00.000Z', updatedAt: '2026-10-01T10:00:00.000Z', cancelledAt: null,
+    checkInDate: '2026-11-01', checkOutDate: '2026-11-02', notes: null, pax: 0, status: 'tentative', confirmationDepositAmountMinor: 100000, createdAt: '2026-10-01T10:00:00.000Z', updatedAt: '2026-10-01T10:00:00.000Z', cancelledAt: null,
   },
   lineItems: [], payments: [], activity: [],
 }
@@ -35,13 +35,17 @@ describe('booking-specific payment entry', () => {
     await waitFor(() => expect(bookingRepository.addPayment).toHaveBeenCalledTimes(1))
     const [savedPayment] = jest.mocked(bookingRepository.addPayment).mock.calls[0]
     expect(savedPayment).toMatchObject({ bookingId, kind: 'payment', amountMinor: 125000, method: 'GCash', transactionReference: 'GC-2026-0091' })
-    expect(onRecorded).toHaveBeenCalledWith(expect.objectContaining({ booking: record.booking, payments: [savedPayment] }))
+    const [, activities, updatedBooking] = jest.mocked(bookingRepository.addPayment).mock.calls[0]
+    expect(updatedBooking).toMatchObject({ status: 'confirmed', updatedAt: expect.any(String) })
+    expect(activities.map(({ eventType }) => eventType)).toEqual(['payment_recorded', 'booking_confirmed'])
+    expect(onRecorded).toHaveBeenCalledWith(expect.objectContaining({ booking: updatedBooking, payments: [savedPayment] }))
     expect(await screen.findByText('Payment recorded.')).toBeTruthy()
   })
 
   it('uses the same booking context when recording a refund', async () => {
     jest.mocked(bookingRepository.findById).mockResolvedValue({
       ...record,
+      booking: { ...record.booking, status: 'confirmed' },
       payments: [{ id: '20000000-0000-4000-8000-000000000001' as UUID, bookingId, kind: 'payment', amountMinor: 200000, paidAt: '2026-10-01', method: 'Cash', transactionReference: null, notes: null, createdAt: '2026-10-01T10:00:00.000Z' }],
     })
     render(<PaymentEntryForm bookingId={bookingId} bookingName="Mia Cruz" />)

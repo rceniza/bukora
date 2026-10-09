@@ -90,8 +90,9 @@ export default function NewBookingRoute() {
     nightUseAmountMinor: settings.nightUseAmountMinor,
     additionalRoomAmountMinor: settings.additionalRoomAmountMinor,
     videokeRentalAmountMinor: settings.videokeRentalAmountMinor,
-  }), [settings.additionalRoomAmountMinor, settings.nightUseAmountMinor, settings.videokeRentalAmountMinor])
-  const createBookingService = useMemo(() => new CreateBookingService(bookingRepository, { rates }), [rates])
+    confirmationDepositAmountMinor: settings.confirmationDepositAmountMinor,
+  }), [settings.additionalRoomAmountMinor, settings.confirmationDepositAmountMinor, settings.nightUseAmountMinor, settings.videokeRentalAmountMinor])
+  const createBookingService = useMemo(() => new CreateBookingService(bookingRepository, { rates, confirmationDepositAmountMinor: rates.confirmationDepositAmountMinor }), [rates])
 
   const validCustomItems = useMemo(() => customItems.flatMap((item) => {
     const amountMinor = parsePHPAmountInput(item.amount)

@@ -32,7 +32,28 @@ export class PaymentService {
         transactionReference: entry.transactionReference },
       createdAt,
     }
-    await this.repository.addPayment(payment, activity)
-    return { ...current, payments: [...current.payments, payment], activity: [...current.activity, activity] }
+    const payments = [...current.payments, payment]
+    const netPaid = calculateNetPaymentsMinor(payments)
+    const confirmsBooking = current.booking.status === 'tentative'
+      && entry.kind === 'payment'
+      && netPaid >= current.booking.confirmationDepositAmountMinor
+    const booking = confirmsBooking
+      ? { ...current.booking, status: 'confirmed' as const, updatedAt: createdAt }
+      : current.booking
+    const activities = confirmsBooking
+      ? [activity, {
+        id: this.createId(), bookingId,
+        eventType: 'booking_confirmed',
+        summary: `Booking confirmed for ${current.booking.guestName}`,
+        details: {
+          paymentId: payment.id,
+          confirmationDepositAmountMinor: current.booking.confirmationDepositAmountMinor,
+          netPaidAmountMinor: netPaid,
+        },
+        createdAt,
+      } satisfies BookingActivity]
+      : [activity]
+    await this.repository.addPayment(payment, activities, confirmsBooking ? booking : undefined)
+    return { ...current, booking, payments, activity: [...current.activity, ...activities] }
   }
 }

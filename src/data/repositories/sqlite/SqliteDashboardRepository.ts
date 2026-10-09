@@ -17,7 +17,7 @@ export class SqliteDashboardRepository implements DashboardRepository {
 
   async getSnapshot(recentPaymentLimit: number): Promise<DashboardSnapshot> {
     const [bookings, lineItems, payments, recentPayments] = await Promise.all([
-      this.client.all<Booking>(`SELECT id, status, guest_name AS guestName, address, cellphone, email, pax,
+      this.client.all<Booking>(`SELECT id, status, confirmation_deposit_amount_minor AS confirmationDepositAmountMinor, guest_name AS guestName, address, cellphone, email, pax,
         check_in_date AS checkInDate, check_out_date AS checkOutDate, notes, created_at AS createdAt,
         updated_at AS updatedAt, cancelled_at AS cancelledAt FROM bookings ORDER BY check_in_date, created_at, id`),
       this.client.all<BookingLineItem>(`SELECT id, booking_id AS bookingId, kind, description, quantity,

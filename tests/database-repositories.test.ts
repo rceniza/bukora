@@ -1,4 +1,5 @@
 import migration from '../drizzle/0000_wandering_bulldozer.sql'
+import confirmationDepositMigration from '../drizzle/0001_boring_human_torch.sql'
 import { createMemorySqlite, type MemorySqliteClient } from './support/memorySqlite'
 import { SqliteBookingRepository } from '../src/data/repositories/sqlite/SqliteBookingRepository'
 import { SqliteSettingsRepository } from '../src/data/repositories/sqlite/SqliteSettingsRepository'
@@ -11,6 +12,7 @@ function makeBooking(): Booking {
   return {
     id: bookingId,
     status: 'confirmed',
+    confirmationDepositAmountMinor: 100000,
     guestName: 'Maria Santos',
     address: 'San Juan, La Union',
     cellphone: '09171234567',
@@ -60,6 +62,18 @@ describe('SQLite repositories and schema migration', () => {
   })
 
   afterEach(() => database.close())
+
+  it('adds the deposit snapshot to an existing database without changing its bookings', async () => {
+    const initialized = await createMemorySqlite(migration, false)
+    try {
+      initialized.database.run(`INSERT INTO bookings (id, status, guest_name, cellphone, pax, check_in_date, check_out_date, created_at, updated_at)
+        VALUES ('${bookingId}', 'confirmed', 'Existing guest', '09171234567', 2, '2026-11-01', '2026-11-02', '${now}', '${now}')`)
+      initialized.database.run(confirmationDepositMigration)
+      await expect(initialized.client.first<{ status: string; confirmationDepositAmountMinor: number }>(
+        'SELECT status, confirmation_deposit_amount_minor AS confirmationDepositAmountMinor FROM bookings WHERE id = ?', [bookingId],
+      )).resolves.toEqual({ status: 'confirmed', confirmationDepositAmountMinor: 0 })
+    } finally { initialized.database.close() }
+  })
 
   it('creates and reads a booking aggregate atomically and updates its guest record', async () => {
     const repository = new SqliteBookingRepository(client)

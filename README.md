@@ -28,7 +28,7 @@ Bukora gives the owner a repeatable record for the booking lifecycle:
 1. **Take an inquiry or reservation** and enter the guest, dates, party size, and notes.
 2. **Build a quote** from the package, room and amenity choices, and any custom charges or discount.
 3. **Check the calendar** for overlapping active reservations before saving.
-4. **Record each payment** as it arrives, including the date, method, and optional transaction number.
+4. **Record each payment** as it arrives, including the date, method, and optional transaction number. A booking becomes confirmed when net payments reach its saved confirmation deposit amount.
 5. **Review the remaining balance** and the activity history from the booking or payments views.
 6. **Change or cancel the reservation** when plans change; keep the event in the record rather than losing it in a notebook.
 7. **Back up the ledger** and restore it on a device when needed.
@@ -41,9 +41,10 @@ This can make handoffs and end-of-day reviews more consistent: the owner can see
 - **Bookings:** create and search bookings, browse a calendar, and filter active or cancelled records.
 - **Booking details:** guest information, date range, itemized price, payments, outstanding balance, and activity history.
 - **Booking changes:** edit guest details, reschedule, and cancel with history recorded.
+- **Deposit-based confirmation:** new bookings are tentative until the configured initial payment is recorded. Bukora records the automatic confirmation in the booking history.
 - **Flexible line items:** add custom charges such as catering or appliance use, or discounts. Party size is recorded for information and does not add a per-person fee.
 - **Payments:** record multiple payments and refunds with date, method, transaction reference, and notes.
-- **Settings:** customize the in-app display name, property name, default package prices, and currency.
+- **Settings:** customize the in-app display name, property name, default package prices, confirmation deposit, and currency.
 - **Backup and restore:** export a versioned backup and validate it before replacing the current ledger.
 - **Offline storage:** native iOS and Android builds use SQLite on the device. No network is required for booking work.
 
@@ -58,7 +59,9 @@ The repository's initial settings demonstrate Cenere Beach House's current packa
 | Videoke when only one room is booked | +₱800 |
 | Videoke when the second room is included | Free |
 
-These are **sample defaults**, not required Bukora prices. A new owner can change the display name, property name, prices, and currency in Settings. The quote saves a snapshot of its line items with the booking, so changing default prices later does not rewrite an existing reservation.
+These are **sample defaults**, not required Bukora prices. A new owner can change the display name, property name, prices, confirmation deposit, and currency in Settings. Cenere's sample confirmation deposit is ₱1,000. Each booking saves a snapshot of its quoted items and required deposit, so changing defaults later does not rewrite an existing reservation. Set the confirmation deposit to ₱0 when no initial payment is required; those bookings are confirmed as soon as they are created.
+
+Tentative bookings still hold their dates against overlapping bookings, so an unpaid reservation cannot accidentally be double-booked. Cancel a tentative booking to release its dates. A confirmed booking remains confirmed if a refund is later recorded; cancel it explicitly to release the reservation.
 
 The current booking rules model one night-use package, one included room, an optional second room, and the videoke rule above. The app supports custom charge and discount lines, but a business with a different package structure or different room/amenity rules may need to adapt the quote rules in the source code. There is no general package editor yet.
 
@@ -88,11 +91,11 @@ The local ledger currently uses these tables:
 
 | Table | Purpose |
 | --- | --- |
-| `bookings` | Guest details, reservation status, dates, notes, and timestamps. |
+| `bookings` | Guest details, reservation status, dates, saved confirmation deposit, notes, and timestamps. |
 | `booking_line_items` | A price snapshot for the package, included or additional options, custom charges, and discounts. |
 | `payments` | Payment and refund entries, including optional transaction references. |
 | `booking_activity` | A history of booking, payment, rescheduling, and cancellation events. |
-| `app_settings` | Owner-configurable display and pricing settings. |
+| `app_settings` | Owner-configurable display, pricing, and confirmation deposit settings. |
 
 See [`db/schema.ts`](db/schema.ts) for the authoritative schema and [`drizzle/`](drizzle/) for SQLite migrations. Booking dates are local calendar dates stored as `YYYY-MM-DD`; timestamps use ISO 8601. Amounts use integer minor units (for example, ₱5,900 is stored as `590000` centavos). UUID values are stored as text.
 

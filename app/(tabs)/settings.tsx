@@ -18,6 +18,7 @@ interface SettingsDraft {
   nightUseAmount: string
   additionalRoomAmount: string
   videokeRentalAmount: string
+  confirmationDepositAmount: string
 }
 
 function toDraft(settings: AppSettings): SettingsDraft {
@@ -27,6 +28,7 @@ function toDraft(settings: AppSettings): SettingsDraft {
     nightUseAmount: (settings.nightUseAmountMinor / 100).toFixed(2),
     additionalRoomAmount: (settings.additionalRoomAmountMinor / 100).toFixed(2),
     videokeRentalAmount: (settings.videokeRentalAmountMinor / 100).toFixed(2),
+    confirmationDepositAmount: (settings.confirmationDepositAmountMinor / 100).toFixed(2),
   }
 }
 
@@ -49,11 +51,13 @@ export default function SettingsScreen() {
     const nightUseAmountMinor = parsePHPAmountInput(draft.nightUseAmount)
     const additionalRoomAmountMinor = parsePHPAmountInput(draft.additionalRoomAmount)
     const videokeRentalAmountMinor = parsePHPAmountInput(draft.videokeRentalAmount)
-    if (nightUseAmountMinor === null || additionalRoomAmountMinor === null || videokeRentalAmountMinor === null) {
+    const confirmationDepositAmountMinor = parsePHPAmountInput(draft.confirmationDepositAmount)
+    if (nightUseAmountMinor === null || additionalRoomAmountMinor === null || videokeRentalAmountMinor === null || confirmationDepositAmountMinor === null) {
       setErrors({
         nightUseAmount: nightUseAmountMinor === null ? 'Enter a PHP amount with up to two decimal places.' : '',
         additionalRoomAmount: additionalRoomAmountMinor === null ? 'Enter a PHP amount with up to two decimal places.' : '',
         videokeRentalAmount: videokeRentalAmountMinor === null ? 'Enter a PHP amount with up to two decimal places.' : '',
+        confirmationDepositAmount: confirmationDepositAmountMinor === null ? 'Enter a PHP amount with up to two decimal places.' : '',
       })
       return
     }
@@ -65,6 +69,7 @@ export default function SettingsScreen() {
       nightUseAmountMinor,
       additionalRoomAmountMinor,
       videokeRentalAmountMinor,
+      confirmationDepositAmountMinor,
     })
     if (!parsed.success) {
       const issue = parsed.error.issues[0]
@@ -143,6 +148,14 @@ export default function SettingsScreen() {
             onChangeText={(value) => updateDraft('videokeRentalAmount', value)}
             error={errors.videokeRentalAmount}
             keyboardType="decimal-pad"
+          />
+          <AppTextField
+            label="Initial payment required to confirm (PHP)"
+            value={draft.confirmationDepositAmount}
+            onChangeText={(value) => updateDraft('confirmationDepositAmount', value)}
+            error={errors.confirmationDepositAmount}
+            keyboardType="decimal-pad"
+            helper="New bookings stay tentative until payments reach this amount. Changes apply to new bookings only."
           />
           <PrimaryButton label="Save settings" loading={saving} onPress={handleSave} />
           {notice ? <Text className="text-center text-sm text-muted" accessibilityLiveRegion="polite">{notice}</Text> : null}

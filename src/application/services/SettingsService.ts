@@ -9,6 +9,7 @@ export const appSettingsSchema = z.object({
   nightUseAmountMinor: z.number().int().nonnegative().safe(),
   additionalRoomAmountMinor: z.number().int().nonnegative().safe(),
   videokeRentalAmountMinor: z.number().int().nonnegative().safe(),
+  confirmationDepositAmountMinor: z.number().int().nonnegative().safe().default(DEFAULT_APP_SETTINGS.confirmationDepositAmountMinor),
   currency: z.literal('PHP'),
 })
 
@@ -18,6 +19,7 @@ const settingKeys = [
   'nightUseAmountMinor',
   'additionalRoomAmountMinor',
   'videokeRentalAmountMinor',
+  'confirmationDepositAmountMinor',
   'currency',
 ] as const satisfies readonly (keyof AppSettings)[]
 
@@ -36,6 +38,7 @@ export class SettingsService {
       nightUseAmountMinor: Number(values.get('nightUseAmountMinor') ?? DEFAULT_APP_SETTINGS.nightUseAmountMinor),
       additionalRoomAmountMinor: Number(values.get('additionalRoomAmountMinor') ?? DEFAULT_APP_SETTINGS.additionalRoomAmountMinor),
       videokeRentalAmountMinor: Number(values.get('videokeRentalAmountMinor') ?? DEFAULT_APP_SETTINGS.videokeRentalAmountMinor),
+      confirmationDepositAmountMinor: Number(values.get('confirmationDepositAmountMinor') ?? DEFAULT_APP_SETTINGS.confirmationDepositAmountMinor),
       currency: values.get('currency') ?? DEFAULT_APP_SETTINGS.currency,
     }
     const parsed = appSettingsSchema.safeParse(candidate)

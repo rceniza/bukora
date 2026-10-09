@@ -7,6 +7,23 @@ import type { UUID } from '../src/domain/models'
 import { createMemorySqlite } from './support/memorySqlite'
 
 describe('payment tracking feature', () => {
+  it('creates a confirmed booking when its configured confirmation deposit is zero', async () => {
+    const { database, client } = await createMemorySqlite(migration)
+    const repository = new SqliteBookingRepository(client)
+    let idCounter = 0
+    try {
+      const booking = await new CreateBookingService(repository, {
+        confirmationDepositAmountMinor: 0,
+        createId: () => `65000000-0000-4000-8000-${String(++idCounter).padStart(12, '0')}` as UUID,
+      }).create({
+        booking: { guestName: 'No deposit guest', cellphone: '09171234567', checkInDate: '2026-11-01', checkOutDate: '2026-11-02' },
+        pricing: {},
+      })
+      expect(booking.booking).toMatchObject({ status: 'confirmed', confirmationDepositAmountMinor: 0 })
+      expect((await repository.findById(booking.booking.id))?.booking.status).toBe('confirmed')
+    } finally { database.close() }
+  })
+
   it('records a deposit, a later payment, and a refund with references in booking history', async () => {
     const { database, client } = await createMemorySqlite(migration)
     const repository = new SqliteBookingRepository(client)
@@ -35,9 +52,11 @@ describe('payment tracking feature', () => {
       ])
       expect(calculateBalanceDueMinor(saved!.lineItems, saved!.payments)).toBe(290000)
       expect(saved?.activity.map(({ eventType }) => eventType)).toEqual([
-        'booking_created', 'payment_recorded', 'payment_recorded', 'payment_refunded',
+        'booking_created', 'payment_recorded', 'booking_confirmed', 'payment_recorded', 'payment_refunded',
       ])
+      expect(saved?.booking.status).toBe('confirmed')
       expect(saved?.activity[1].details).toMatchObject({ transactionReference: 'GC-DEP-1042', amountMinor: 200000 })
+      expect(saved?.activity[2].details).toMatchObject({ confirmationDepositAmountMinor: 100000, netPaidAmountMinor: 200000 })
     } finally { database.close() }
   })
 
@@ -56,6 +75,41 @@ describe('payment tracking feature', () => {
       await expect(service.record(created.booking.id, { kind: 'refund', amountMinor: 30001, paidAt: '2026-10-08', method: 'Cash' }))
         .rejects.toThrow('Refund cannot exceed the amount paid so far.')
       expect((await repository.findById(created.booking.id))?.payments).toHaveLength(1)
+    } finally { database.close() }
+  })
+
+  it('confirms on cumulative deposits at the saved threshold and stays confirmed after a refund', async () => {
+    const { database, client } = await createMemorySqlite(migration)
+    const repository = new SqliteBookingRepository(client)
+    let idCounter = 0
+    let timestamp = '2026-10-07T10:00:00.000Z'
+    const createId = () => `90000000-0000-4000-8000-${String(++idCounter).padStart(12, '0')}` as UUID
+    const booking = await new CreateBookingService(repository, {
+      createId, now: () => timestamp, confirmationDepositAmountMinor: 150000,
+    }).create({
+      booking: { guestName: 'Deposit guest', cellphone: '09171234567', checkInDate: '2026-11-01', checkOutDate: '2026-11-02' },
+      pricing: {},
+    })
+    const payments = new PaymentService(repository, createId, () => timestamp)
+    try {
+      expect(booking.booking).toMatchObject({ status: 'tentative', confirmationDepositAmountMinor: 150000 })
+      expect(await repository.findOverlaps('2026-11-01', '2026-11-02')).toHaveLength(1)
+
+      timestamp = '2026-10-08T10:00:00.000Z'
+      const partial = await payments.record(booking.booking.id, { kind: 'payment', amountMinor: 100000, paidAt: '2026-10-08', method: 'GCash' })
+      expect(partial.booking.status).toBe('tentative')
+      expect(partial.activity.some(({ eventType }) => eventType === 'booking_confirmed')).toBe(false)
+
+      timestamp = '2026-10-09T10:00:00.000Z'
+      const confirmed = await payments.record(booking.booking.id, { kind: 'payment', amountMinor: 50000, paidAt: '2026-10-09', method: 'Cash' })
+      expect(confirmed.booking.status).toBe('confirmed')
+      expect(confirmed.activity.filter(({ eventType }) => eventType === 'booking_confirmed')).toHaveLength(1)
+
+      timestamp = '2026-10-10T10:00:00.000Z'
+      await payments.record(booking.booking.id, { kind: 'refund', amountMinor: 50000, paidAt: '2026-10-10', method: 'Cash' })
+      const saved = await repository.findById(booking.booking.id)
+      expect(saved?.booking.status).toBe('confirmed')
+      expect(saved?.activity.filter(({ eventType }) => eventType === 'booking_confirmed')).toHaveLength(1)
     } finally { database.close() }
   })
 })

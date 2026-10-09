@@ -6,6 +6,7 @@ export const bookings = sqliteTable(
   {
     id: text('id').primaryKey(),
     status: text('status', { enum: ['tentative', 'confirmed', 'completed', 'cancelled'] }).notNull().default('confirmed'),
+    confirmationDepositAmountMinor: integer('confirmation_deposit_amount_minor').notNull().default(0),
     guestName: text('guest_name').notNull(),
     address: text('address'),
     cellphone: text('cellphone').notNull(),
@@ -21,6 +22,7 @@ export const bookings = sqliteTable(
   (table) => [
     check('bookings_status_check', sql`${table.status} in ('tentative', 'confirmed', 'completed', 'cancelled')`),
     check('bookings_pax_nonnegative_check', sql`${table.pax} >= 0`),
+    check('bookings_confirmation_deposit_nonnegative_check', sql`${table.confirmationDepositAmountMinor} >= 0`),
     check('bookings_date_range_check', sql`${table.checkOutDate} > ${table.checkInDate}`),
     index('bookings_status_checkin_idx').on(table.status, table.checkInDate),
     index('bookings_guest_name_idx').on(table.guestName),

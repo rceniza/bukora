@@ -43,6 +43,7 @@ describe('owner settings feature', () => {
 
       fireEvent.changeText(await screen.findByDisplayValue('Bukora'), 'Cenere Ledger')
       fireEvent.changeText(screen.getByLabelText('Night-use package (PHP)'), '6100')
+      fireEvent.changeText(screen.getByLabelText('Initial payment required to confirm (PHP)'), '1750')
       fireEvent.press(screen.getByRole('button', { name: 'Save settings' }))
 
       expect(await screen.findByText('Settings saved on this device.')).toBeTruthy()
@@ -50,9 +51,21 @@ describe('owner settings feature', () => {
         await expect(service.load()).resolves.toMatchObject({
           displayName: 'Cenere Ledger',
           nightUseAmountMinor: 610000,
+          confirmationDepositAmountMinor: 175000,
         })
       })
       expect((await bookingRepository.findById(existingBooking.booking.id))?.lineItems[0].totalAmountMinor).toBe(590000)
+      expect((await bookingRepository.findById(existingBooking.booking.id))?.booking.confirmationDepositAmountMinor).toBe(100000)
+      const futureBooking = await new CreateBookingService(bookingRepository, {
+        rates: DEFAULT_PRICING_RATES,
+        confirmationDepositAmountMinor: (await service.load()).confirmationDepositAmountMinor,
+        createId: () => `10000000-0000-4000-8000-${String(++idCounter).padStart(12, '0')}` as UUID,
+        now: () => '2026-10-10T10:00:00.000Z',
+      }).create({
+        booking: { guestName: 'Future guest', cellphone: '09171234567', checkInDate: '2026-12-03', checkOutDate: '2026-12-04' },
+        pricing: {},
+      })
+      expect(futureBooking.booking).toMatchObject({ status: 'tentative', confirmationDepositAmountMinor: 175000 })
 
       rerender(
         <AppSettingsProvider service={service}>

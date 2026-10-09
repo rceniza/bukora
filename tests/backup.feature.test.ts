@@ -28,13 +28,19 @@ describe('versioned local backup feature', () => {
       await bookingRepository.addPayment({
         id: createId(), bookingId: first.booking.id, kind: 'payment', amountMinor: 100000, paidAt: '2026-10-07',
         method: 'GCash', transactionReference: 'BACKUP-REF', notes: null, createdAt: '2026-10-07T10:00:00.000Z',
-      }, {
+      }, [{
         id: createId(), bookingId: first.booking.id, eventType: 'payment_recorded', summary: 'Deposit received',
         details: { transactionReference: 'BACKUP-REF' }, createdAt: '2026-10-07T10:00:00.000Z',
-      })
+      }])
 
       const exported = await backup.export()
       const preview = backup.parse(exported)
+      const legacy = JSON.parse(exported) as { settings: Record<string, unknown>; bookings: { booking: Record<string, unknown> }[] }
+      delete legacy.settings.confirmationDepositAmountMinor
+      delete legacy.bookings[0].booking.confirmationDepositAmountMinor
+      const legacyPreview = backup.parse(JSON.stringify(legacy))
+      expect(legacyPreview.settings.confirmationDepositAmountMinor).toBe(100000)
+      expect(legacyPreview.bookings[0].booking.confirmationDepositAmountMinor).toBe(0)
       await createBooking.create({
         booking: { guestName: 'Temporary Guest', cellphone: '09171234568', checkInDate: '2026-11-03', checkOutDate: '2026-11-04' },
         pricing: {},

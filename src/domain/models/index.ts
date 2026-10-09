@@ -9,6 +9,7 @@ export type BookingStatus = 'tentative' | 'confirmed' | 'completed' | 'cancelled
 export interface Booking {
   id: BookingId
   status: BookingStatus
+  confirmationDepositAmountMinor: number
   guestName: string
   address: string | null
   cellphone: string
@@ -70,5 +71,6 @@ export interface AppSettings {
   nightUseAmountMinor: number
   additionalRoomAmountMinor: number
   videokeRentalAmountMinor: number
+  confirmationDepositAmountMinor: number
   currency: 'PHP'
 }

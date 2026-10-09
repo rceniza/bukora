@@ -47,6 +47,8 @@ describe('booking creation pricing snapshot', () => {
       ])
       expect(saved?.lineItems.reduce((total, item) => total + item.totalAmountMinor, 0)).toBe(690000)
       expect(saved?.activity[0].details).toEqual({
+        status: 'tentative',
+        confirmationDepositAmountMinor: 100000,
         checkInDate: '2026-11-10',
         checkOutDate: '2026-11-11',
         totalAmountMinor: 690000,

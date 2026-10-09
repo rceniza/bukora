@@ -79,7 +79,7 @@ export default function DashboardScreen() {
                 <View key={booking.id} className="gap-2 rounded-2xl bg-canvas p-4">
                   <View className="flex-row items-center justify-between gap-3">
                     <Text className="flex-1 text-base font-semibold text-ink">{booking.guestName}</Text>
-                    <Text className="text-xs font-medium uppercase text-cenere-700">{booking.status}</Text>
+                    <Text className={`text-xs font-medium uppercase ${booking.status === 'tentative' ? 'text-amber-700' : 'text-cenere-700'}`}>{booking.status}</Text>
                   </View>
                   <Text className="text-sm text-muted">{formatDisplayDate(booking.checkInDate)} · {formatDisplayDate(booking.checkOutDate)}</Text>
                   <Text className="text-sm font-medium text-ink">Balance {formatPHPAmount(booking.balanceDueMinor)}</Text>

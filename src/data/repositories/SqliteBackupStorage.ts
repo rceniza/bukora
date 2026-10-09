@@ -6,7 +6,7 @@ import { SqliteSettingsRepository } from './sqlite/SqliteSettingsRepository'
 import { SettingsService } from '../../application/services/SettingsService'
 
 const settingKeys: (keyof AppSettings)[] = [
-  'displayName', 'propertyName', 'nightUseAmountMinor', 'additionalRoomAmountMinor', 'videokeRentalAmountMinor', 'currency',
+  'displayName', 'propertyName', 'nightUseAmountMinor', 'additionalRoomAmountMinor', 'videokeRentalAmountMinor', 'confirmationDepositAmountMinor', 'currency',
 ]
 
 export class SqliteBackupStorage implements BackupStorage {
@@ -34,9 +34,9 @@ export class SqliteBackupStorage implements BackupStorage {
       }
       for (const { booking, lineItems, payments, activity } of snapshot.bookings) {
         await transaction.execute(
-          `INSERT INTO bookings (id, status, guest_name, address, cellphone, email, pax, check_in_date, check_out_date, notes, created_at, updated_at, cancelled_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [booking.id, booking.status, booking.guestName, booking.address, booking.cellphone, booking.email, booking.pax,
+          `INSERT INTO bookings (id, status, confirmation_deposit_amount_minor, guest_name, address, cellphone, email, pax, check_in_date, check_out_date, notes, created_at, updated_at, cancelled_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [booking.id, booking.status, booking.confirmationDepositAmountMinor, booking.guestName, booking.address, booking.cellphone, booking.email, booking.pax,
             booking.checkInDate, booking.checkOutDate, booking.notes, booking.createdAt, booking.updatedAt, booking.cancelledAt],
         )
         for (const item of lineItems) await transaction.execute(

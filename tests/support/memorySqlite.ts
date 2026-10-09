@@ -1,5 +1,6 @@
 import initSqlJs from 'sql.js'
 import type { Database as SqlJsDatabase, SqlJsStatic } from 'sql.js'
+import confirmationDepositMigration from '../../drizzle/0001_boring_human_torch.sql'
 import type { SqliteClient, SqliteValue } from '../../src/data/database/SqliteClient'
 
 export class MemorySqliteClient implements SqliteClient {
@@ -46,11 +47,12 @@ export class MemorySqliteClient implements SqliteClient {
 
 let sqliteModulePromise: Promise<SqlJsStatic> | undefined
 
-export async function createMemorySqlite(migration: string) {
+export async function createMemorySqlite(migration: string, applyConfirmationMigration = true) {
   sqliteModulePromise ??= initSqlJs({ locateFile: () => require.resolve('sql.js/dist/sql-wasm.wasm') })
   const sqliteModule = await sqliteModulePromise
   const database = new sqliteModule.Database()
   database.run('PRAGMA foreign_keys = ON')
   database.run(migration.replaceAll('--> statement-breakpoint', ''))
+  if (applyConfirmationMigration) database.run(confirmationDepositMigration.replaceAll('--> statement-breakpoint', ''))
   return { database, client: new MemorySqliteClient(database) }
 }

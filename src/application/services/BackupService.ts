@@ -8,6 +8,7 @@ import { isUUID } from '../../shared/utils/uuid'
 const uuidSchema = z.string().refine(isUUID, 'Expected a valid UUID.').transform((value) => value as UUID)
 const bookingSchema = z.object({
   id: uuidSchema, status: z.enum(['tentative', 'confirmed', 'completed', 'cancelled']),
+  confirmationDepositAmountMinor: z.number().int().nonnegative().safe().default(0),
   guestName: z.string().min(1).max(120), address: z.string().nullable(), cellphone: z.string().min(7).max(24),
   email: z.string().email().nullable(), pax: z.number().int().nonnegative(),
   checkInDate: z.string().refine(isValidISODate), checkOutDate: z.string().refine(isValidISODate),

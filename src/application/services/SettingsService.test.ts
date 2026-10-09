@@ -27,7 +27,7 @@ describe('SettingsService', () => {
   it('persists validated owner settings and reloads them', async () => {
     const repository = new MemorySettingsRepository()
     const service = new SettingsService(repository, () => '2026-10-07T10:00:00.000Z')
-    const updated = { ...DEFAULT_APP_SETTINGS, displayName: 'Cenere Bookings', nightUseAmountMinor: 600000 }
+    const updated = { ...DEFAULT_APP_SETTINGS, displayName: 'Cenere Bookings', nightUseAmountMinor: 600000, confirmationDepositAmountMinor: 175000 }
 
     await expect(service.save(updated)).resolves.toEqual(updated)
     await expect(service.load()).resolves.toEqual(updated)
@@ -38,5 +38,6 @@ describe('SettingsService', () => {
     const service = new SettingsService(new MemorySettingsRepository())
     await expect(service.save({ ...DEFAULT_APP_SETTINGS, displayName: ' ' })).rejects.toThrow()
     await expect(service.save({ ...DEFAULT_APP_SETTINGS, videokeRentalAmountMinor: -1 })).rejects.toThrow()
+    await expect(service.save({ ...DEFAULT_APP_SETTINGS, confirmationDepositAmountMinor: -1 })).rejects.toThrow()
   })
 })

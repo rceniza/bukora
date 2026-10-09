@@ -7,6 +7,7 @@ export const DEFAULT_APP_SETTINGS: Readonly<AppSettings> = Object.freeze({
   nightUseAmountMinor: 590000,
   additionalRoomAmountMinor: 180000,
   videokeRentalAmountMinor: 80000,
+  confirmationDepositAmountMinor: 100000,
   currency: 'PHP',
 })
 
