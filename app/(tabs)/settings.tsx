@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
+import { ActivityIndicator, Text, View } from 'react-native'
 import { AppTextField } from '../../components/ui/AppTextField'
 import { PrimaryButton } from '../../components/ui/PrimaryButton'
 import { SectionHeading } from '../../components/ui/SectionHeading'
@@ -10,6 +10,7 @@ import { appSettingsSchema } from '../../src/application/services/SettingsServic
 import { useAppSettings } from '../../src/application/settings/AppSettingsContext'
 import type { AppSettings } from '../../src/domain/models'
 import { parsePHPAmountInput } from '../../src/shared/utils/moneyInput'
+import { FormScrollView } from '../../components/forms/FormScrollView'
 
 interface SettingsDraft {
   displayName: string
@@ -86,7 +87,7 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-canvas">
-      <ScrollView contentContainerClassName="mx-auto w-full max-w-2xl gap-6 px-5 py-6">
+      <FormScrollView contentContainerClassName="mx-auto w-full max-w-2xl gap-6 px-5 py-6">
         <View className="gap-1">
             <Text className="text-3xl font-bold text-ink">Settings</Text>
             <Text className="text-sm text-muted">Set your display name and booking rates.</Text>
@@ -154,7 +155,7 @@ export default function SettingsScreen() {
           </Link>
         </SurfaceCard>
         </>}
-      </ScrollView>
+      </FormScrollView>
     </SafeAreaView>
   )
 }

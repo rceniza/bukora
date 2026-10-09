@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { format } from 'date-fns'
-import { Pressable, ScrollView, Text, View } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { CalendarDateField } from '../../components/forms/CalendarDateField'
 import { AppTextField } from '../../components/ui/AppTextField'
@@ -17,6 +17,7 @@ import type { PaymentKind } from '../../src/domain/models'
 import { formatDisplayDate } from '../../src/shared/utils/date'
 import { formatPHPAmount } from '../../src/shared/utils/money'
 import { parsePHPAmountInput } from '../../src/shared/utils/moneyInput'
+import { FormScrollView } from '../../components/forms/FormScrollView'
 
 const METHODS = ['Cash', 'GCash', 'Maya', 'Bank transfer', 'Other']
 
@@ -73,7 +74,7 @@ export default function PaymentsScreen() {
     finally { setSaving(false) }
   }
 
-  return <SafeAreaView className="flex-1 bg-canvas"><ScrollView contentContainerClassName="mx-auto w-full max-w-2xl gap-5 px-5 py-6">
+  return <SafeAreaView className="flex-1 bg-canvas"><FormScrollView contentContainerClassName="mx-auto w-full max-w-2xl gap-5 px-5 py-6">
     <View><Text className="text-sm font-medium uppercase text-cenere-700">Money received</Text><Text className="mt-1 text-3xl font-bold text-ink">Payments</Text></View>
     <SurfaceCard className="gap-4"><Text className="text-lg font-semibold text-ink">Record a payment</Text>
       <View className="flex-row gap-2">{(['payment', 'refund'] as const).map((item) => <Pressable key={item} onPress={() => setKind(item)} accessibilityRole="button" accessibilityState={{ selected: kind === item }} className={`rounded-full px-4 py-2 ${kind === item ? 'bg-cenere-600' : 'bg-canvas'}`}><Text className={kind === item ? 'font-semibold text-white' : 'text-ink'}>{item === 'payment' ? 'Payment' : 'Refund'}</Text></Pressable>)}</View>
@@ -92,5 +93,5 @@ export default function PaymentsScreen() {
     <SurfaceCard className="gap-3"><View className="flex-row items-center justify-between"><Text className="text-lg font-semibold text-ink">Payment history</Text><Text className="text-sm font-semibold text-cenere-700">Net {formatPHPAmount(netTotal)}</Text></View>
       {loading ? <LoadingState message="Loading payment history" /> : entries.length === 0 ? <EmptyState title="No payments recorded" message="Payments and refunds will appear here with their booking and transaction references." /> : entries.map(({ booking, payment }) => <Pressable key={payment.id} onPress={() => router.push(`/booking/${booking.id}`)} accessibilityRole="button"><View className="flex-row items-center justify-between gap-3 border-b border-line py-3"><View className="flex-1 gap-1"><Text className="text-sm font-semibold text-ink">{booking.guestName} · {payment.kind}</Text><Text className="text-xs text-muted">{formatDisplayDate(payment.paidAt)} · {payment.method}</Text>{payment.transactionReference ? <Text className="text-xs text-muted">Ref {payment.transactionReference}</Text> : null}</View><Text className={`text-sm font-semibold ${payment.kind === 'refund' ? 'text-amber-700' : 'text-cenere-700'}`}>{payment.kind === 'refund' ? '−' : '+'}{formatPHPAmount(payment.amountMinor)}</Text></View></Pressable>)}
     </SurfaceCard>
-  </ScrollView></SafeAreaView>
+  </FormScrollView></SafeAreaView>
 }

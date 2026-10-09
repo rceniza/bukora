@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { format } from 'date-fns'
 import { Link, useRouter } from 'expo-router'
-import { Pressable, ScrollView, Text, View } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { AppTextField } from '../../components/ui/AppTextField'
 import { EmptyState } from '../../components/ui/EmptyState'
@@ -14,6 +14,7 @@ import type { BookingAggregate } from '../../src/domain/ports/BookingRepository'
 import { formatDisplayDate } from '../../src/shared/utils/date'
 import { formatPHPAmount } from '../../src/shared/utils/money'
 import { calculateBalanceDueMinor } from '../../src/domain/services/bookingBalance'
+import { FormScrollView } from '../../components/forms/FormScrollView'
 
 type Filter = 'upcoming' | 'all' | 'cancelled'
 
@@ -44,7 +45,7 @@ export default function BookingListScreen() {
   }, [filter, query, records])
 
   return <SafeAreaView className="flex-1 bg-canvas">
-    <ScrollView contentContainerClassName="mx-auto w-full max-w-2xl gap-5 px-5 py-6">
+    <FormScrollView contentContainerClassName="mx-auto w-full max-w-2xl gap-5 px-5 py-6">
       <View className="flex-row items-center justify-between"><View><Text className="text-sm font-medium uppercase text-cenere-700">Your ledger</Text><Text className="mt-1 text-3xl font-bold text-ink">Bookings</Text></View><Link href="/booking/new" asChild><PrimaryButton label="Add booking" /></Link></View>
       <View className="flex-row gap-2">
         {(['upcoming', 'all', 'cancelled'] as const).map((item) => <Pressable key={item} onPress={() => setFilter(item)} accessibilityRole="button" accessibilityState={{ selected: filter === item }} className={`rounded-full px-4 py-2 ${filter === item ? 'bg-cenere-600' : 'bg-white'}`}><Text className={filter === item ? 'font-semibold text-white' : 'text-ink'}>{item[0].toUpperCase() + item.slice(1)}</Text></Pressable>)}
@@ -57,6 +58,6 @@ export default function BookingListScreen() {
           <SurfaceCard className="gap-2"><View className="flex-row items-center justify-between gap-2"><Text className="flex-1 text-base font-semibold text-ink">{booking.guestName}</Text><Text className={`text-xs font-semibold uppercase ${booking.status === 'cancelled' ? 'text-amber-700' : 'text-cenere-700'}`}>{booking.status}</Text></View><Text className="text-sm text-muted">{formatDisplayDate(booking.checkInDate)} – {formatDisplayDate(booking.checkOutDate)} · {booking.pax} pax</Text><View className="flex-row justify-between"><Text className="text-sm text-muted">{booking.cellphone}</Text><Text className="text-sm font-medium text-ink">Balance {formatPHPAmount(balance)}</Text></View></SurfaceCard>
         </Pressable>
       })}
-    </ScrollView>
+    </FormScrollView>
   </SafeAreaView>
 }

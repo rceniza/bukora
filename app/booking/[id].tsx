@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useLocalSearchParams } from 'expo-router'
-import { Pressable, ScrollView, Text, View } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { CalendarDateField } from '../../components/forms/CalendarDateField'
 import { GuestDetailsFields } from '../../components/forms/GuestDetailsFields'
@@ -19,6 +19,7 @@ import { checkoutAfterChangingCheckIn, formatDisplayDate, minimumCheckoutDate } 
 import { formatPHPAmount } from '../../src/shared/utils/money'
 import { isUUID } from '../../src/shared/utils/uuid'
 import { BackButton } from '../../components/navigation/BackButton'
+import { FormScrollView } from '../../components/forms/FormScrollView'
 
 function describeActivityDetails(details: Record<string, unknown> | null): string {
   if (!details) return ''
@@ -118,7 +119,7 @@ export default function BookingDetailScreen() {
   const total = lineItems.reduce((sum, item) => sum + item.totalAmountMinor, 0)
   const paid = payments.reduce((sum, payment) => sum + (payment.kind === 'refund' ? -payment.amountMinor : payment.amountMinor), 0)
 
-  return <SafeAreaView className="flex-1 bg-canvas"><ScrollView contentContainerClassName="mx-auto w-full max-w-2xl gap-5 px-5 py-6">
+  return <SafeAreaView className="flex-1 bg-canvas"><FormScrollView contentContainerClassName="mx-auto w-full max-w-2xl gap-5 px-5 py-6">
     <View className="flex-row items-center justify-between"><BackButton label="Bookings" fallback="/booking" /><Text className="text-xs font-semibold uppercase text-cenere-700">{booking.status}</Text></View>
     <View><Text className="text-3xl font-bold text-ink">{booking.guestName}</Text><Text className="mt-1 text-sm text-muted">{formatDisplayDate(booking.checkInDate)} – {formatDisplayDate(booking.checkOutDate)}</Text></View>
     {error ? <ErrorState message={error} /> : null}
@@ -128,5 +129,5 @@ export default function BookingDetailScreen() {
       {booking.status !== 'cancelled' ? <SurfaceCard className="gap-3"><PrimaryButton label="Edit details or dates" onPress={() => setEditing(true)} />{confirmCancel ? <><AppTextField label="Cancellation reason (optional)" value={reason} onChangeText={setReason} /><PrimaryButton label={saving ? 'Cancelling…' : 'Confirm cancellation'} onPress={() => void cancelBooking()} disabled={saving} /><Pressable onPress={() => setConfirmCancel(false)} className="items-center p-2"><Text className="font-semibold text-muted">Keep booking</Text></Pressable></> : <Pressable onPress={() => setConfirmCancel(true)} accessibilityRole="button" className="items-center rounded-2xl border border-amber-300 p-3"><Text className="font-semibold text-amber-800">Cancel booking</Text></Pressable>}</SurfaceCard> : null}
     </>}
     <SurfaceCard className="gap-3"><Text className="text-lg font-semibold text-ink">Change history</Text>{activity.slice().reverse().map((item) => <View key={item.id} className="border-l-2 border-cenere-500 pl-3"><Text className="text-sm font-medium text-ink">{item.summary}</Text>{describeActivityDetails(item.details) ? <Text className="mt-1 text-xs leading-5 text-muted">{describeActivityDetails(item.details)}</Text> : null}<Text className="mt-1 text-xs text-muted">{new Date(item.createdAt).toLocaleString()}</Text></View>)}</SurfaceCard>
-  </ScrollView></SafeAreaView>
+  </FormScrollView></SafeAreaView>
 }

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { addDays, format } from 'date-fns'
 import { useRouter } from 'expo-router'
-import { Pressable, ScrollView, Text, View } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { BookingQuoteSummary } from '../../components/booking/BookingQuoteSummary'
 import { StayDurationSummary } from '../../components/booking/StayDurationSummary'
@@ -21,6 +21,7 @@ import { formatPHPAmount } from '../../src/shared/utils/money'
 import { parsePHPAmountInput } from '../../src/shared/utils/moneyInput'
 import { checkoutAfterChangingCheckIn, minimumCheckoutDate } from '../../src/shared/utils/date'
 import { BackButton } from '../../components/navigation/BackButton'
+import { FormScrollView } from '../../components/forms/FormScrollView'
 
 interface CustomItemDraft {
   id: number
@@ -188,7 +189,7 @@ export default function NewBookingRoute() {
 
   return (
     <SafeAreaView className="flex-1 bg-canvas">
-      <ScrollView contentContainerClassName="mx-auto w-full max-w-2xl gap-5 px-5 py-6">
+      <FormScrollView contentContainerClassName="mx-auto w-full max-w-2xl gap-5 px-5 py-6">
         <View className="flex-row items-center justify-between">
           <View className="gap-1">
             <Text className="text-3xl font-bold text-ink">Add a booking</Text>
@@ -279,7 +280,7 @@ export default function NewBookingRoute() {
 
         {errorMessage ? <Text className="text-sm text-red-700" accessibilityRole="alert">{errorMessage}</Text> : null}
         {overlaps.length === 0 ? <PrimaryButton label="Save booking" loading={saving} onPress={() => void saveBooking()} /> : null}
-      </ScrollView>
+      </FormScrollView>
     </SafeAreaView>
   )
 }

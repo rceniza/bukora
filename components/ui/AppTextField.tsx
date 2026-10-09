@@ -17,6 +17,8 @@ export function AppTextField({
   className,
   ...inputProps
 }: AppTextFieldProps) {
+  const multiline = Boolean(inputProps.multiline)
+
   return (
     <View className="gap-2">
       <Text className="text-sm font-medium text-ink">{label}</Text>
@@ -24,7 +26,8 @@ export function AppTextField({
         {...inputProps}
         value={value}
         onChangeText={onChangeText}
-        className={`min-h-12 rounded-xl border bg-white px-4 py-3 text-base text-ink ${error ? 'border-red-500' : 'border-stone-200'} ${className ?? ''}`}
+        textAlignVertical={inputProps.textAlignVertical ?? (multiline ? 'top' : 'center')}
+        className={`${multiline ? 'min-h-28' : 'min-h-12'} rounded-xl border bg-white px-4 py-3 text-base text-ink ${error ? 'border-red-500' : 'border-stone-200'} ${className ?? ''}`}
         accessibilityLabel={inputProps.accessibilityLabel ?? label}
         accessibilityState={{ disabled: inputProps.editable === false }}
         accessibilityHint={inputProps.accessibilityHint ?? error ?? helper}

@@ -24,4 +24,13 @@ describe('AppTextField', () => {
 
     expect(screen.getByRole('alert')).toHaveTextContent('Enter a valid cellphone number.')
   })
+
+  it('top-aligns multiline text and gives it room to show multiple lines', () => {
+    const { getByLabelText } = render(
+      <AppTextField label="Booking notes" value="A note" onChangeText={() => {}} multiline numberOfLines={3} />,
+    )
+
+    expect(getByLabelText('Booking notes').props.textAlignVertical).toBe('top')
+    expect(getByLabelText('Booking notes').props.numberOfLines).toBe(3)
+  })
 })
