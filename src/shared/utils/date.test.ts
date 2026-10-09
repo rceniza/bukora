@@ -1,4 +1,4 @@
-import { checkoutAfterChangingCheckIn, formatDisplayDate, isDateRangeValid, isValidISODate } from './date'
+import { checkoutAfterChangingCheckIn, formatDisplayDate, isDateRangeValid, isValidISODate, minimumCheckoutDate } from './date'
 
 describe('date utilities', () => {
   it('accepts valid ISO dates and rejects impossible dates', () => {
@@ -25,5 +25,10 @@ describe('date utilities', () => {
 
   it('uses a one-night stay if the current date range is invalid', () => {
     expect(checkoutAfterChangingCheckIn('2026-06-12', '2026-06-12', '2026-07-20')).toBe('2026-07-21')
+  })
+
+  it('requires checkout to be at least the day after check-in', () => {
+    expect(minimumCheckoutDate('2026-10-10')).toBe('2026-10-11')
+    expect(minimumCheckoutDate('invalid')).toBeNull()
   })
 })

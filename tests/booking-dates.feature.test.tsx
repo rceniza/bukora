@@ -43,4 +43,24 @@ describe('booking date selection', () => {
 
     expect(screen.getByText(formatDisplayDate(format(shiftedCheckOut, 'yyyy-MM-dd')))).toBeTruthy()
   })
+
+  it('disables checkout dates before check-in and does not change checkout when pressed', () => {
+    render(<NewBookingRoute />)
+    const checkIn = addDays(new Date(), 5)
+    const previousDay = addDays(checkIn, -1)
+    const checkOut = addDays(checkIn, 1)
+
+    fireEvent.press(screen.getByLabelText('Choose Check-in'))
+    fireEvent.press(screen.getByLabelText(`Select ${format(checkIn, 'MMMM d, yyyy')}`))
+    fireEvent.press(screen.getByLabelText('Choose Check-out'))
+
+    const unavailableDate = screen.getByLabelText(`Select ${format(previousDay, 'MMMM d, yyyy')}`)
+    const checkInDay = screen.getByLabelText(`Select ${format(checkIn, 'MMMM d, yyyy')}`)
+    expect(unavailableDate.props.accessibilityState).toEqual(expect.objectContaining({ disabled: true }))
+    expect(checkInDay.props.accessibilityState).toEqual(expect.objectContaining({ disabled: true }))
+    fireEvent.press(unavailableDate)
+    fireEvent.press(checkInDay)
+
+    expect(screen.getByText(formatDisplayDate(format(checkOut, 'yyyy-MM-dd')))).toBeTruthy()
+  })
 })

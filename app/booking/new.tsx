@@ -18,7 +18,7 @@ import { calculateBookingQuote } from '../../src/domain/services/bookingQuote'
 import { bookingRepository } from '../../src/data/repositories/bookingRepository'
 import { formatPHPAmount } from '../../src/shared/utils/money'
 import { parsePHPAmountInput } from '../../src/shared/utils/moneyInput'
-import { checkoutAfterChangingCheckIn } from '../../src/shared/utils/date'
+import { checkoutAfterChangingCheckIn, minimumCheckoutDate } from '../../src/shared/utils/date'
 import { BackButton } from '../../components/navigation/BackButton'
 
 interface CustomItemDraft {
@@ -205,7 +205,7 @@ export default function NewBookingRoute() {
         <SurfaceCard className="gap-4">
           <Text className="text-lg font-semibold text-ink">Stay dates</Text>
           <CalendarDateField label="Check-in" value={checkInDate} onChange={changeCheckInDate} error={fieldErrors.checkInDate} />
-          <CalendarDateField label="Check-out" value={checkOutDate} onChange={(value) => { setCheckOutDate(value); setOverlaps([]); setFieldErrors((current) => ({ ...current, checkOutDate: '' })) }} error={fieldErrors.checkOutDate} />
+          <CalendarDateField label="Check-out" value={checkOutDate} minimumDate={minimumCheckoutDate(checkInDate) ?? undefined} onChange={(value) => { setCheckOutDate(value); setOverlaps([]); setFieldErrors((current) => ({ ...current, checkOutDate: '' })) }} error={fieldErrors.checkOutDate} />
         </SurfaceCard>
 
         <SurfaceCard className="gap-4">

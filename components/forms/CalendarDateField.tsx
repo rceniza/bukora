@@ -8,11 +8,12 @@ interface CalendarDateFieldProps {
   value: string
   onChange: (value: string) => void
   error?: string
+  minimumDate?: string
 }
 
 const weekDays = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 
-export function CalendarDateField({ label, value, onChange, error }: CalendarDateFieldProps) {
+export function CalendarDateField({ label, value, onChange, error, minimumDate }: CalendarDateFieldProps) {
   const [visible, setVisible] = useState(false)
   const [month, setMonth] = useState(() => value ? parseISO(value) : new Date())
   const selectedDate = value ? parseISO(value) : null
@@ -65,16 +66,18 @@ export function CalendarDateField({ label, value, onChange, error }: CalendarDat
               {days.map((day) => {
                 const selected = selectedDate !== null && isSameDay(day, selectedDate)
                 const inMonth = isSameMonth(day, month)
+                const disabled = minimumDate !== undefined && format(day, 'yyyy-MM-dd') < minimumDate
                 return (
                   <Pressable
                     key={format(day, 'yyyy-MM-dd')}
                     onPress={() => selectDate(day)}
+                    disabled={disabled}
                     accessibilityRole="button"
                     accessibilityLabel={`Select ${format(day, 'MMMM d, yyyy')}`}
-                    accessibilityState={{ selected }}
-                    className={`mb-1 h-11 w-[14.28%] items-center justify-center rounded-full ${selected ? 'bg-cenere-600' : ''}`}
+                    accessibilityState={{ selected, disabled }}
+                    className={`mb-1 h-11 w-[14.28%] items-center justify-center rounded-full ${selected ? 'bg-cenere-600' : disabled ? 'opacity-40' : ''}`}
                   >
-                    <Text className={`text-sm ${selected ? 'font-semibold text-white' : inMonth ? 'text-ink' : 'text-stone-300'}`}>{format(day, 'd')}</Text>
+                    <Text className={`text-sm ${selected ? 'font-semibold text-white' : disabled || !inMonth ? 'text-stone-300' : 'text-ink'}`}>{format(day, 'd')}</Text>
                   </Pressable>
                 )
               })}

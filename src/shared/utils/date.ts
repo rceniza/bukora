@@ -34,6 +34,11 @@ export function checkoutAfterChangingCheckIn(
   return format(addDays(nextCheckIn, nights), ISO_DATE_FORMAT)
 }
 
+export function minimumCheckoutDate(checkInDate: string): string | null {
+  const checkIn = parseISODate(checkInDate)
+  return checkIn ? format(addDays(checkIn, 1), ISO_DATE_FORMAT) : null
+}
+
 export function formatDisplayDate(value: string): string {
   const parsed = parseISODate(value)
   return parsed ? format(parsed, 'MMM d, yyyy') : value
