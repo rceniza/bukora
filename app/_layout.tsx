@@ -13,6 +13,7 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="booking/new" />
           <Stack.Screen name="booking/[id]" />
+          <Stack.Screen name="payment/new" options={{ presentation: 'modal' }} />
           <Stack.Screen name="calendar" />
           <Stack.Screen name="backup" />
         </Stack>
