@@ -28,6 +28,7 @@ describe('booking date selection', () => {
 
     expect(screen.getByText(formatDisplayDate(checkInIso))).toBeTruthy()
     expect(screen.getByText(formatDisplayDate(nextCheckOut))).toBeTruthy()
+    expect(screen.getByText('1 night')).toBeTruthy()
   })
 
   it('keeps the chosen multi-night duration when check-in changes', () => {
@@ -42,6 +43,7 @@ describe('booking date selection', () => {
     fireEvent.press(screen.getByLabelText(`Select ${format(newCheckIn, 'MMMM d, yyyy')}`))
 
     expect(screen.getByText(formatDisplayDate(format(shiftedCheckOut, 'yyyy-MM-dd')))).toBeTruthy()
+    expect(screen.getByText('3 nights')).toBeTruthy()
   })
 
   it('disables checkout dates before check-in and does not change checkout when pressed', () => {

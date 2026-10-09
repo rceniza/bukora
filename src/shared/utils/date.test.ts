@@ -1,4 +1,4 @@
-import { checkoutAfterChangingCheckIn, formatDisplayDate, isDateRangeValid, isValidISODate, minimumCheckoutDate } from './date'
+import { checkoutAfterChangingCheckIn, formatDisplayDate, getStayNightCount, isDateRangeValid, isValidISODate, minimumCheckoutDate } from './date'
 
 describe('date utilities', () => {
   it('accepts valid ISO dates and rejects impossible dates', () => {
@@ -30,5 +30,11 @@ describe('date utilities', () => {
   it('requires checkout to be at least the day after check-in', () => {
     expect(minimumCheckoutDate('2026-10-10')).toBe('2026-10-11')
     expect(minimumCheckoutDate('invalid')).toBeNull()
+  })
+
+  it('counts nights between check-in and check-out without counting checkout day', () => {
+    expect(getStayNightCount('2026-10-10', '2026-10-11')).toBe(1)
+    expect(getStayNightCount('2026-10-10', '2026-10-13')).toBe(3)
+    expect(getStayNightCount('2026-10-10', '2026-10-10')).toBeNull()
   })
 })

@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { BookingQuoteSummary } from '../../components/booking/BookingQuoteSummary'
+import { StayDurationSummary } from '../../components/booking/StayDurationSummary'
 import { CalendarDateField } from '../../components/forms/CalendarDateField'
 import { GuestDetailsFields } from '../../components/forms/GuestDetailsFields'
 import type { GuestDetailsValues } from '../../components/forms/GuestDetailsFields'
@@ -206,6 +207,7 @@ export default function NewBookingRoute() {
           <Text className="text-lg font-semibold text-ink">Stay dates</Text>
           <CalendarDateField label="Check-in" value={checkInDate} onChange={changeCheckInDate} error={fieldErrors.checkInDate} />
           <CalendarDateField label="Check-out" value={checkOutDate} minimumDate={minimumCheckoutDate(checkInDate) ?? undefined} onChange={(value) => { setCheckOutDate(value); setOverlaps([]); setFieldErrors((current) => ({ ...current, checkOutDate: '' })) }} error={fieldErrors.checkOutDate} />
+          <StayDurationSummary checkInDate={checkInDate} checkOutDate={checkOutDate} />
         </SurfaceCard>
 
         <SurfaceCard className="gap-4">
