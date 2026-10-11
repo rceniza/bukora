@@ -38,6 +38,15 @@ jest.mock('../src/application/dashboard/DashboardContext', () => ({
 describe('dashboard availability calendar feature', () => {
   beforeEach(() => { mockPush.mockClear(); mockRefresh.mockClear(); mockFocusCallback = undefined })
 
+  it('places the availability calendar directly above upcoming bookings', () => {
+    const { toJSON } = render(<DashboardScreen />)
+    const renderedText = flattenText(toJSON())
+
+    expect(renderedText.indexOf('Availability')).toBeGreaterThanOrEqual(0)
+    expect(renderedText.indexOf('Availability')).toBeLessThan(renderedText.indexOf('Upcoming bookings'))
+    expect(renderedText.indexOf('Availability')).toBeGreaterThan(renderedText.indexOf('Balance due'))
+  })
+
   it('routes an available date to a prefilled booking and an occupied date to its booking detail', () => {
     render(<DashboardScreen />)
 
@@ -61,6 +70,16 @@ describe('dashboard availability calendar feature', () => {
     expect(mockRefresh).toHaveBeenCalledTimes(1)
   })
 })
+
+function flattenText(node: unknown): string[] {
+  if (node === null || node === undefined) return []
+  if (typeof node === 'string' || typeof node === 'number') return [String(node)]
+  if (Array.isArray(node)) return node.flatMap(flattenText)
+  if (typeof node === 'object' && 'children' in node) {
+    return flattenText((node as { children?: unknown }).children)
+  }
+  return []
+}
 
 function parseLocalDate(value: string): Date {
   const [year, month, day] = value.split('-').map(Number)

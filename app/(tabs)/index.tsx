@@ -35,13 +35,6 @@ export default function DashboardScreen() {
           </Link>
         </View>
 
-        <DashboardAvailabilityCalendar
-          bookings={summary.availabilityBookings}
-          onSelectAvailableDate={(date) => router.push({ pathname: '/booking/new', params: { checkInDate: date } })}
-          onSelectBooking={(id) => router.push(`/booking/${id}`)}
-          onOpenFullCalendar={() => router.push('/calendar')}
-        />
-
         <View className="rounded-3xl bg-cenere-600 p-6">
           <Text className="text-sm font-medium text-white/80">YOUR BOOKING LEDGER</Text>
           <Text className="mt-2 text-2xl font-bold text-white">Keep every stay in view.</Text>
@@ -76,6 +69,13 @@ export default function DashboardScreen() {
             <Text className="mt-1 text-xs text-muted">across bookings</Text>
           </SurfaceCard>
         </View>
+
+        <DashboardAvailabilityCalendar
+          bookings={summary.availabilityBookings}
+          onSelectAvailableDate={(date) => router.push({ pathname: '/booking/new', params: { checkInDate: date } })}
+          onSelectBooking={(id) => router.push(`/booking/${id}`)}
+          onOpenFullCalendar={() => router.push('/calendar')}
+        />
 
         <SurfaceCard className="gap-3">
           <SectionHeading title="Upcoming bookings" />
