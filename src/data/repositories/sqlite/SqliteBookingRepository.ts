@@ -121,7 +121,7 @@ export class SqliteBookingRepository implements BookingRepository {
     )
   }
 
-  async update(booking: Booking, activity?: BookingActivity): Promise<void> {
+  async update(booking: Booking, activity?: BookingActivity, lineItems?: BookingLineItem[]): Promise<void> {
     await this.client.transaction(async (transaction) => {
       await transaction.execute(
         `UPDATE bookings SET status = ?, confirmation_deposit_amount_minor = ?, guest_name = ?, address = ?, cellphone = ?, email = ?, pax = ?,
@@ -129,6 +129,16 @@ export class SqliteBookingRepository implements BookingRepository {
         [booking.status, booking.confirmationDepositAmountMinor, booking.guestName, booking.address, booking.cellphone, booking.email, booking.pax,
           booking.checkInDate, booking.checkOutDate, booking.notes, booking.updatedAt, booking.cancelledAt, booking.id],
       )
+      if (lineItems) {
+        await transaction.execute('DELETE FROM booking_line_items WHERE booking_id = ?', [booking.id])
+        for (const item of lineItems) {
+          await transaction.execute(
+            `INSERT INTO booking_line_items (id, booking_id, kind, description, quantity, unit_amount_minor, total_amount_minor, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [item.id, item.bookingId, item.kind, item.description, item.quantity, item.unitAmountMinor, item.totalAmountMinor, item.createdAt],
+          )
+        }
+      }
       if (activity) {
         await transaction.execute(
           `INSERT INTO booking_activity (id, booking_id, event_type, summary, details_json, created_at)

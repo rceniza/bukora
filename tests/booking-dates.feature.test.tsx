@@ -19,6 +19,14 @@ describe('booking date selection', () => {
     mockedUseLocalSearchParams.mockReturnValue({} as never)
   })
 
+  it('uses the shared pricing editor when creating bookings', () => {
+    render(<NewBookingRoute />)
+
+    expect(screen.getByText('Rooms and videoke')).toBeTruthy()
+    expect(screen.getByText('Additional charges or discounts')).toBeTruthy()
+    expect(screen.getByText('Price breakdown')).toBeTruthy()
+  })
+
   it('preselects a valid check-in date passed from availability and keeps checkout the following night', () => {
     mockedUseLocalSearchParams.mockReturnValue({ checkInDate: '2026-10-20' } as never)
 

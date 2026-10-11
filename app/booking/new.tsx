@@ -3,7 +3,7 @@ import { addDays, format } from 'date-fns'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { Pressable, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { BookingQuoteSummary } from '../../components/booking/BookingQuoteSummary'
+import { BookingPricingFields, type CustomItemDraft } from '../../components/booking/BookingPricingFields'
 import { StayDurationSummary } from '../../components/booking/StayDurationSummary'
 import { CalendarDateField } from '../../components/forms/CalendarDateField'
 import { GuestDetailsFields } from '../../components/forms/GuestDetailsFields'
@@ -17,55 +17,13 @@ import { useDashboard } from '../../src/application/dashboard/DashboardContext'
 import { bookingFormSchema } from '../../src/domain/schemas/booking'
 import { calculateBookingQuote } from '../../src/domain/services/bookingQuote'
 import { bookingRepository } from '../../src/data/repositories/bookingRepository'
-import { formatPHPAmount } from '../../src/shared/utils/money'
 import { parsePHPAmountInput } from '../../src/shared/utils/moneyInput'
 import { checkoutAfterChangingCheckIn, isValidISODate, minimumCheckoutDate, parseISODate } from '../../src/shared/utils/date'
 import { normalizePhoneNumber, type PhoneCountryCode } from '../../src/shared/utils/phone'
 import { BackButton } from '../../components/navigation/BackButton'
 import { FormScrollView } from '../../components/forms/FormScrollView'
 
-interface CustomItemDraft {
-  id: number
-  kind: 'custom_charge' | 'discount'
-  description: string
-  amount: string
-  quantity: string
-}
-
 const todayISO = () => format(new Date(), 'yyyy-MM-dd')
-
-function OptionToggle({
-  label,
-  description,
-  checked,
-  disabled = false,
-  onPress,
-}: {
-  label: string
-  description: string
-  checked: boolean
-  disabled?: boolean
-  onPress: () => void
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      accessibilityRole="checkbox"
-      accessibilityLabel={label}
-      accessibilityState={{ checked, disabled }}
-      className={`flex-row items-start gap-3 rounded-2xl border border-line bg-white p-4 ${disabled ? 'opacity-60' : ''}`}
-    >
-      <View className={`mt-0.5 h-5 w-5 items-center justify-center rounded-md border ${checked ? 'border-cenere-600 bg-cenere-600' : 'border-stone-300'}`}>
-        {checked ? <Text className="text-xs font-bold text-white">✓</Text> : null}
-      </View>
-      <View className="flex-1 gap-1">
-        <Text className="text-sm font-semibold text-ink">{label}</Text>
-        <Text className="text-sm leading-5 text-muted">{description}</Text>
-      </View>
-    </Pressable>
-  )
-}
 
 export default function NewBookingRoute() {
   const router = useRouter()
@@ -216,62 +174,20 @@ export default function NewBookingRoute() {
           <StayDurationSummary checkInDate={checkInDate} checkOutDate={checkOutDate} />
         </SurfaceCard>
 
-        <SurfaceCard className="gap-4">
-          <Text className="text-lg font-semibold text-ink">Rooms and videoke</Text>
-          <OptionToggle
-            label={`Add a second room (+ ${formatPHPAmount(rates.additionalRoomAmountMinor)})`}
-            description="One room is included in the night-use package. Videoke is free with the second room."
-            checked={includeSecondRoom}
-            onPress={() => { setIncludeSecondRoom((current) => !current); setRentVideokeWithOneRoom(false) }}
-          />
-          {includeSecondRoom ? (
-            <View className="rounded-2xl bg-cenere-50 p-4"><Text className="text-sm font-medium text-cenere-700">Videoke is included at no extra charge.</Text></View>
-          ) : (
-            <OptionToggle
-              label={`Rent videoke (+ ${formatPHPAmount(rates.videokeRentalAmountMinor)})`}
-              description="Optional when booking one room."
-              checked={rentVideokeWithOneRoom}
-              onPress={() => setRentVideokeWithOneRoom((current) => !current)}
-            />
-          )}
-        </SurfaceCard>
-
-        <SurfaceCard className="gap-4">
-          <View className="flex-row items-center justify-between gap-3">
-            <Text className="text-lg font-semibold text-ink">Additional charges or discounts</Text>
-            <Pressable onPress={addCustomItem} accessibilityRole="button" accessibilityLabel="Add custom line item" className="rounded-full border border-cenere-600 px-3 py-2">
-              <Text className="text-sm font-semibold text-cenere-700">Add item</Text>
-            </Pressable>
-          </View>
-          {customItems.length === 0 ? <Text className="text-sm leading-5 text-muted">Add catering, appliances, discounts, or any other agreed amount.</Text> : null}
-          {customItems.map((item) => (
-            <View key={item.id} className="gap-3 rounded-2xl bg-canvas p-4">
-              <View className="flex-row items-center justify-between">
-                <Text className="text-sm font-semibold text-ink">Custom line item</Text>
-                <Pressable onPress={() => setCustomItems((current) => current.filter(({ id }) => id !== item.id))} accessibilityRole="button" accessibilityLabel={`Remove custom item ${item.id}`}>
-                  <Text className="px-2 py-1 text-sm font-medium text-red-700">Remove</Text>
-                </Pressable>
-              </View>
-              <View className="flex-row gap-2">
-                <Pressable onPress={() => updateCustomItem(item.id, { kind: 'custom_charge' })} accessibilityRole="radio" accessibilityLabel={`Charge item ${item.id}`} accessibilityState={{ selected: item.kind === 'custom_charge' }} className={`flex-1 items-center rounded-xl border p-3 ${item.kind === 'custom_charge' ? 'border-cenere-600 bg-cenere-50' : 'border-line bg-white'}`}>
-                  <Text className="text-sm font-medium text-ink">Charge</Text>
-                </Pressable>
-                <Pressable onPress={() => updateCustomItem(item.id, { kind: 'discount' })} accessibilityRole="radio" accessibilityLabel={`Discount item ${item.id}`} accessibilityState={{ selected: item.kind === 'discount' }} className={`flex-1 items-center rounded-xl border p-3 ${item.kind === 'discount' ? 'border-cenere-600 bg-cenere-50' : 'border-line bg-white'}`}>
-                  <Text className="text-sm font-medium text-ink">Discount</Text>
-                </Pressable>
-              </View>
-              <AppTextField label="Description" value={item.description} onChangeText={(value) => updateCustomItem(item.id, { description: value })} placeholder="For example, catering" />
-              <View className="flex-row gap-3">
-                <View className="flex-1"><AppTextField label="Amount (PHP)" value={item.amount} onChangeText={(value) => updateCustomItem(item.id, { amount: value })} keyboardType="decimal-pad" /></View>
-                <View className="w-24"><AppTextField label="Quantity" value={item.quantity} onChangeText={(value) => updateCustomItem(item.id, { quantity: value })} keyboardType="number-pad" /></View>
-              </View>
-              {customErrors[item.id] ? <Text className="text-sm text-red-700" accessibilityRole="alert">{customErrors[item.id]}</Text> : null}
-            </View>
-          ))}
-        </SurfaceCard>
-
-        {quoteResult.error ? <Text className="text-sm text-red-700" accessibilityRole="alert">{quoteResult.error}</Text> : null}
-        <BookingQuoteSummary quote={quoteResult.quote} />
+        <BookingPricingFields
+          rates={rates}
+          includeSecondRoom={includeSecondRoom}
+          rentVideokeWithOneRoom={rentVideokeWithOneRoom}
+          customItems={customItems}
+          customErrors={customErrors}
+          quote={quoteResult.quote}
+          quoteError={quoteResult.error}
+          onToggleSecondRoom={() => { setIncludeSecondRoom((current) => !current); setRentVideokeWithOneRoom(false) }}
+          onToggleVideoke={() => setRentVideokeWithOneRoom((current) => !current)}
+          onAddCustomItem={addCustomItem}
+          onUpdateCustomItem={updateCustomItem}
+          onRemoveCustomItem={(id) => setCustomItems((current) => current.filter((item) => item.id !== id))}
+        />
 
         {overlaps.length > 0 ? (
           <SurfaceCard className="gap-3 border border-amber-300 bg-amber-50">

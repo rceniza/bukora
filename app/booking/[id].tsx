@@ -22,6 +22,11 @@ import { isUUID } from '../../src/shared/utils/uuid'
 import { BackButton } from '../../components/navigation/BackButton'
 import { FormScrollView } from '../../components/forms/FormScrollView'
 import { BookingPaymentHistory } from '../../components/booking/BookingPaymentHistory'
+import { BookingPricingFields, type CustomItemDraft } from '../../components/booking/BookingPricingFields'
+import { useAppSettings } from '../../src/application/settings/AppSettingsContext'
+import { calculateBookingQuote } from '../../src/domain/services/bookingQuote'
+import type { PricingRates } from '../../src/domain/services/bookingQuote'
+import { parsePHPAmountInput } from '../../src/shared/utils/moneyInput'
 
 function describeActivityDetails(details: Record<string, unknown> | null): string {
   if (!details) return ''
@@ -30,11 +35,17 @@ function describeActivityDetails(details: Record<string, unknown> | null): strin
     if (key === 'previous' && typeof value === 'object' && typeof details.next === 'object' && details.next !== null) {
       const previous = value as Record<string, unknown>
       const next = details.next as Record<string, unknown>
-      const labels: Record<string, string> = { guestName: 'Guest', address: 'Address', cellphone: 'Cellphone', email: 'Email', pax: 'Pax', checkInDate: 'Check-in', checkOutDate: 'Check-out', notes: 'Notes' }
+      const labels: Record<string, string> = { guestName: 'Guest', address: 'Address', cellphone: 'Cellphone', email: 'Email', pax: 'Pax', checkInDate: 'Check-in', checkOutDate: 'Check-out', notes: 'Notes', lineItems: 'Price breakdown', totalAmountMinor: 'Total' }
       return Object.keys(labels).flatMap((field) => {
         if (previous[field] === next[field]) return []
         const display = (item: unknown) => item === null || item === '' ? '—'
-          : (field === 'checkInDate' || field === 'checkOutDate') ? formatDisplayDate(String(item)) : String(item)
+          : (field === 'checkInDate' || field === 'checkOutDate') ? formatDisplayDate(String(item))
+            : field === 'totalAmountMinor' && typeof item === 'number' ? formatPHPAmount(item)
+              : field === 'lineItems' && Array.isArray(item) ? item.map((line) => {
+                if (typeof line !== 'object' || line === null) return ''
+                const priceItem = line as { description?: unknown; totalAmountMinor?: unknown }
+                return `${String(priceItem.description ?? 'Item')} ${typeof priceItem.totalAmountMinor === 'number' ? formatPHPAmount(priceItem.totalAmountMinor) : ''}`.trim()
+              }).join(', ') : String(item)
         return [`${labels[field]}: ${display(previous[field])} → ${display(next[field])}`]
       })
     }
@@ -67,6 +78,53 @@ export default function BookingDetailScreen() {
   const [notes, setNotes] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const service = useMemo(() => new BookingManagementService(bookingRepository), [])
+  const { settings } = useAppSettings()
+  const rates = useMemo<PricingRates>(() => {
+    const lineItems = record?.lineItems ?? []
+    const basePackage = lineItems.find((item) => item.kind === 'base_package')
+    const secondRoom = lineItems.find((item) => item.kind === 'additional_room')
+    const paidVideoke = lineItems.find((item) => item.kind === 'videoke' && item.totalAmountMinor > 0)
+    return {
+      nightUseAmountMinor: basePackage?.unitAmountMinor ?? settings.nightUseAmountMinor,
+      additionalRoomAmountMinor: secondRoom?.unitAmountMinor ?? settings.additionalRoomAmountMinor,
+      videokeRentalAmountMinor: paidVideoke?.unitAmountMinor ?? settings.videokeRentalAmountMinor,
+    }
+  }, [record?.lineItems, settings.additionalRoomAmountMinor, settings.nightUseAmountMinor, settings.videokeRentalAmountMinor])
+  const [includeSecondRoom, setIncludeSecondRoom] = useState(false)
+  const [rentVideokeWithOneRoom, setRentVideokeWithOneRoom] = useState(false)
+  const [customItems, setCustomItems] = useState<CustomItemDraft[]>([])
+  const [customErrors, setCustomErrors] = useState<Record<number, string>>({})
+  const [nextCustomId, setNextCustomId] = useState(1)
+
+  const validCustomItems = useMemo(() => customItems.flatMap((item) => {
+    const amountMinor = parsePHPAmountInput(item.amount)
+    const quantity = Number(item.quantity)
+    if (!item.description.trim() || amountMinor === null || !Number.isInteger(quantity) || quantity <= 0) return []
+    return [{ kind: item.kind, description: item.description, quantity, amountMinor }]
+  }), [customItems])
+  const quoteResult = useMemo(() => {
+    try {
+      return { quote: calculateBookingQuote({ includeSecondRoom, rentVideokeWithOneRoom, customItems: validCustomItems }, rates), error: '' }
+    } catch {
+      return { quote: calculateBookingQuote({ includeSecondRoom, rentVideokeWithOneRoom }, rates), error: 'Check the discount amount; discounts cannot exceed the booking total.' }
+    }
+  }, [includeSecondRoom, rates, rentVideokeWithOneRoom, validCustomItems])
+
+  function loadPricing(lineItems: BookingAggregate['lineItems']) {
+    const hasSecondRoom = lineItems.some((item) => item.kind === 'additional_room')
+    setIncludeSecondRoom(hasSecondRoom)
+    setRentVideokeWithOneRoom(!hasSecondRoom && lineItems.some((item) => item.kind === 'videoke' && item.totalAmountMinor > 0))
+    const drafts = lineItems.filter((item) => item.kind === 'custom_charge' || item.kind === 'discount').map((item, index) => ({
+      id: index + 1,
+      kind: item.kind as 'custom_charge' | 'discount',
+      description: item.description,
+      amount: (Math.abs(item.unitAmountMinor) / 100).toFixed(2),
+      quantity: String(item.quantity),
+    }))
+    setCustomItems(drafts)
+    setCustomErrors({})
+    setNextCustomId(drafts.length + 1)
+  }
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -81,6 +139,7 @@ export default function BookingDetailScreen() {
       setRecord(found)
       if (found) {
         const { booking } = found
+        loadPricing(found.lineItems)
         const phoneInput = getPhoneInputFromStoredValue(booking.cellphone)
         setPhoneCountryCode(phoneInput.countryCode)
         setGuest({ guestName: booking.guestName, address: booking.address ?? '', cellphone: phoneInput.nationalNumber, email: booking.email ?? '', pax: booking.pax ? String(booking.pax) : '' })
@@ -108,7 +167,23 @@ export default function BookingDetailScreen() {
         setSaving(false)
         return
       }
-      const updated = await service.updateDetails(record.booking.id, { ...input, cellphone: normalizePhoneNumber(guest.cellphone, phoneCountryCode) })
+      const invalidCustomItems: Record<number, string> = {}
+      for (const item of customItems) {
+        if (!item.description.trim() || parsePHPAmountInput(item.amount) === null || !Number.isInteger(Number(item.quantity)) || Number(item.quantity) < 1) {
+          invalidCustomItems[item.id] = 'Enter a description, valid amount, and positive quantity.'
+        }
+      }
+      if (Object.keys(invalidCustomItems).length > 0) {
+        setCustomErrors(invalidCustomItems)
+        return
+      }
+      if (quoteResult.error) {
+        setError(quoteResult.error)
+        return
+      }
+      const updated = await service.updateDetails(record.booking.id, { ...input, cellphone: normalizePhoneNumber(guest.cellphone, phoneCountryCode) }, {
+        options: { includeSecondRoom, rentVideokeWithOneRoom, customItems: validCustomItems }, rates,
+      })
       setFieldErrors({})
       setRecord(updated); setEditing(false)
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Changes could not be saved.') }
@@ -122,6 +197,21 @@ export default function BookingDetailScreen() {
     finally { setSaving(false) }
   }
 
+  function startEditing() {
+    if (record) loadPricing(record.lineItems)
+    setEditing(true)
+  }
+
+  function updateCustomItem(id: number, patch: Partial<CustomItemDraft>) {
+    setCustomItems((current) => current.map((item) => item.id === id ? { ...item, ...patch } : item))
+    setCustomErrors((current) => ({ ...current, [id]: '' }))
+  }
+
+  function addCustomItem() {
+    setCustomItems((current) => [...current, { id: nextCustomId, kind: 'custom_charge', description: '', amount: '', quantity: '1' }])
+    setNextCustomId((current) => current + 1)
+  }
+
   if (loading) return <SafeAreaView className="flex-1 bg-canvas p-5"><BackButton label="Bookings" fallback="/booking" /><LoadingState message="Loading booking" /></SafeAreaView>
   if (!record) return <SafeAreaView className="flex-1 bg-canvas p-5"><BackButton label="Bookings" fallback="/booking" /><ErrorState message={error || 'Booking was not found.'} onRetry={() => void load()} /></SafeAreaView>
   const { booking, lineItems, payments, activity } = record
@@ -132,12 +222,16 @@ export default function BookingDetailScreen() {
     <View className="flex-row items-center justify-between"><BackButton label="Bookings" fallback="/booking" /><Text className={`text-xs font-semibold uppercase ${booking.status === 'tentative' ? 'text-amber-700' : 'text-cenere-700'}`}>{booking.status}</Text></View>
     <View><Text className="text-3xl font-bold text-ink">{booking.guestName}</Text><Text className="mt-1 text-sm text-muted">{formatDisplayDate(booking.checkInDate)} – {formatDisplayDate(booking.checkOutDate)}</Text></View>
     {error ? <ErrorState message={error} /> : null}
-    {editing ? <SurfaceCard className="gap-4"><Text className="text-lg font-semibold text-ink">Edit booking</Text><GuestDetailsFields values={guest} errors={fieldErrors} phoneCountryCode={phoneCountryCode} onPhoneCountryCodeChange={setPhoneCountryCode} onChange={(field, value) => { setGuest((current) => ({ ...current, [field]: value })); setFieldErrors((current) => ({ ...current, [field]: '' })) }} /><View className="flex-row gap-3"><CalendarDateField label="Check-in" value={checkIn} error={fieldErrors.checkInDate} onChange={(value) => { setCheckOut((current) => checkoutAfterChangingCheckIn(checkIn, current, value)); setCheckIn(value); setFieldErrors((current) => ({ ...current, checkInDate: '', checkOutDate: '' })) }} /><CalendarDateField label="Check-out" value={checkOut} minimumDate={minimumCheckoutDate(checkIn) ?? undefined} error={fieldErrors.checkOutDate} onChange={(value) => { setCheckOut(value); setFieldErrors((current) => ({ ...current, checkOutDate: '' })) }} /></View><AppTextField label="Booking notes (optional)" value={notes} onChangeText={setNotes} multiline /><PrimaryButton label={saving ? 'Saving…' : 'Save changes'} onPress={() => void saveChanges()} disabled={saving} /><Pressable onPress={() => setEditing(false)} className="items-center p-2"><Text className="font-semibold text-muted">Discard edits</Text></Pressable></SurfaceCard> : <>
+    {editing ? <View className="gap-5">
+      <SurfaceCard className="gap-4"><Text className="text-lg font-semibold text-ink">Edit booking</Text><GuestDetailsFields values={guest} errors={fieldErrors} phoneCountryCode={phoneCountryCode} onPhoneCountryCodeChange={setPhoneCountryCode} onChange={(field, value) => { setGuest((current) => ({ ...current, [field]: value })); setFieldErrors((current) => ({ ...current, [field]: '' })) }} /><View className="flex-row gap-3"><CalendarDateField label="Check-in" value={checkIn} error={fieldErrors.checkInDate} onChange={(value) => { setCheckOut((current) => checkoutAfterChangingCheckIn(checkIn, current, value)); setCheckIn(value); setFieldErrors((current) => ({ ...current, checkInDate: '', checkOutDate: '' })) }} /><CalendarDateField label="Check-out" value={checkOut} minimumDate={minimumCheckoutDate(checkIn) ?? undefined} error={fieldErrors.checkOutDate} onChange={(value) => { setCheckOut(value); setFieldErrors((current) => ({ ...current, checkOutDate: '' })) }} /></View><AppTextField label="Booking notes (optional)" value={notes} onChangeText={setNotes} multiline /></SurfaceCard>
+      <BookingPricingFields rates={rates} includeSecondRoom={includeSecondRoom} rentVideokeWithOneRoom={rentVideokeWithOneRoom} customItems={customItems} customErrors={customErrors} quote={quoteResult.quote} quoteError={quoteResult.error} onToggleSecondRoom={() => { setIncludeSecondRoom((current) => !current); setRentVideokeWithOneRoom(false) }} onToggleVideoke={() => setRentVideokeWithOneRoom((current) => !current)} onAddCustomItem={addCustomItem} onUpdateCustomItem={updateCustomItem} onRemoveCustomItem={(itemId) => setCustomItems((current) => current.filter(({ id: itemDraftId }) => itemDraftId !== itemId))} />
+      <SurfaceCard className="gap-4"><PrimaryButton label={saving ? 'Saving…' : 'Save changes'} onPress={() => void saveChanges()} disabled={saving} /><Pressable onPress={() => setEditing(false)} className="items-center p-2"><Text className="font-semibold text-muted">Discard edits</Text></Pressable></SurfaceCard>
+    </View> : <View className="gap-5">
       <SurfaceCard className="gap-3"><View className="flex-row justify-between"><Text className="text-sm text-muted">Cellphone</Text><Text className="text-sm font-medium text-ink">{booking.cellphone}</Text></View><View className="flex-row justify-between"><Text className="text-sm text-muted">Address</Text><Text className="max-w-[65%] text-right text-sm font-medium text-ink">{booking.address || '—'}</Text></View><View className="flex-row justify-between"><Text className="text-sm text-muted">Guests</Text><Text className="text-sm font-medium text-ink">{booking.pax} pax</Text></View>{booking.email ? <View className="flex-row justify-between"><Text className="text-sm text-muted">Email</Text><Text className="text-sm font-medium text-ink">{booking.email}</Text></View> : null}{booking.notes ? <Text className="text-sm text-muted">{booking.notes}</Text> : null}</SurfaceCard>
       <SurfaceCard className="gap-3"><Text className="text-lg font-semibold text-ink">Price summary</Text>{lineItems.map((item) => <View key={item.id} className="flex-row justify-between"><Text className="flex-1 text-sm text-muted">{item.description}</Text><Text className="text-sm text-ink">{formatPHPAmount(item.totalAmountMinor)}</Text></View>)}<View className="border-t border-line pt-3"><View className="flex-row justify-between"><Text className="font-medium text-ink">Total</Text><Text className="font-semibold text-ink">{formatPHPAmount(total)}</Text></View><View className="mt-2 flex-row justify-between"><Text className="text-sm text-muted">Paid</Text><Text className="text-sm text-cenere-700">{formatPHPAmount(paid)}</Text></View><View className="mt-2 flex-row justify-between"><Text className="text-sm text-muted">Balance due</Text><Text className="text-sm font-semibold text-ink">{formatPHPAmount(total - paid)}</Text></View>{booking.status === 'tentative' ? <View className="mt-2 flex-row justify-between"><Text className="text-sm text-muted">Still needed to confirm</Text><Text className="text-sm font-semibold text-amber-700">{formatPHPAmount(Math.max(0, booking.confirmationDepositAmountMinor - paid))}</Text></View> : null}</View></SurfaceCard>
       <BookingPaymentHistory payments={payments} onAddPayment={() => router.push({ pathname: '/payment/new', params: { bookingId: booking.id } })} />
-      {booking.status !== 'cancelled' ? <SurfaceCard className="gap-3"><PrimaryButton label="Edit details or dates" onPress={() => setEditing(true)} />{confirmCancel ? <><AppTextField label="Cancellation reason (optional)" value={reason} onChangeText={setReason} /><PrimaryButton label={saving ? 'Cancelling…' : 'Confirm cancellation'} onPress={() => void cancelBooking()} disabled={saving} /><Pressable onPress={() => setConfirmCancel(false)} className="items-center p-2"><Text className="font-semibold text-muted">Keep booking</Text></Pressable></> : <Pressable onPress={() => setConfirmCancel(true)} accessibilityRole="button" className="items-center rounded-2xl border border-amber-300 p-3"><Text className="font-semibold text-amber-800">Cancel booking</Text></Pressable>}</SurfaceCard> : null}
-    </>}
+      {booking.status !== 'cancelled' ? <SurfaceCard className="gap-3"><PrimaryButton label="Edit booking" onPress={startEditing} />{confirmCancel ? <><AppTextField label="Cancellation reason (optional)" value={reason} onChangeText={setReason} /><PrimaryButton label={saving ? 'Cancelling…' : 'Confirm cancellation'} onPress={() => void cancelBooking()} disabled={saving} /><Pressable onPress={() => setConfirmCancel(false)} className="items-center p-2"><Text className="font-semibold text-muted">Keep booking</Text></Pressable></> : <Pressable onPress={() => setConfirmCancel(true)} accessibilityRole="button" className="items-center rounded-2xl border border-amber-300 p-3"><Text className="font-semibold text-amber-800">Cancel booking</Text></Pressable>}</SurfaceCard> : null}
+    </View>}
     <SurfaceCard className="gap-3"><Text className="text-lg font-semibold text-ink">Change history</Text>{activity.slice().reverse().map((item) => <View key={item.id} className="border-l-2 border-cenere-500 pl-3"><Text className="text-sm font-medium text-ink">{item.summary}</Text>{describeActivityDetails(item.details) ? <Text className="mt-1 text-xs leading-5 text-muted">{describeActivityDetails(item.details)}</Text> : null}<Text className="mt-1 text-xs text-muted">{new Date(item.createdAt).toLocaleString()}</Text></View>)}</SurfaceCard>
   </FormScrollView></SafeAreaView>
 }
