@@ -1,4 +1,5 @@
-import { Link } from 'expo-router'
+import { useCallback } from 'react'
+import { Link, useFocusEffect, useRouter } from 'expo-router'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { SectionHeading } from '../../components/ui/SectionHeading'
@@ -12,10 +13,13 @@ import { formatPHPAmount } from '../../src/shared/utils/money'
 import { ErrorState } from '../../components/ui/ErrorState'
 import { LoadingState } from '../../components/ui/LoadingState'
 import { PrimaryButton } from '../../components/ui/PrimaryButton'
+import { DashboardAvailabilityCalendar } from '../../components/dashboard/DashboardAvailabilityCalendar'
 
 export default function DashboardScreen() {
+  const router = useRouter()
   const { settings } = useAppSettings()
   const { summary, loading, error, refresh } = useDashboard()
+  useFocusEffect(useCallback(() => { void refresh() }, [refresh]))
   return (
     <SafeAreaView className="flex-1 bg-canvas">
       <ScrollView contentContainerClassName="mx-auto w-full max-w-2xl gap-6 px-5 py-6">
@@ -30,6 +34,13 @@ export default function DashboardScreen() {
             </Pressable>
           </Link>
         </View>
+
+        <DashboardAvailabilityCalendar
+          bookings={summary.availabilityBookings}
+          onSelectAvailableDate={(date) => router.push({ pathname: '/booking/new', params: { checkInDate: date } })}
+          onSelectBooking={(id) => router.push(`/booking/${id}`)}
+          onOpenFullCalendar={() => router.push('/calendar')}
+        />
 
         <View className="rounded-3xl bg-cenere-600 p-6">
           <Text className="text-sm font-medium text-white/80">YOUR BOOKING LEDGER</Text>

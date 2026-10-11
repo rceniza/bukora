@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { createContext, useCallback, useContext, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { DashboardSummary } from '../../domain/services/dashboardSummary'
 import type { DashboardService } from '../services/DashboardService'
@@ -14,6 +14,7 @@ const EMPTY_SUMMARY: DashboardSummary = {
   bookingCount: 0,
   upcomingCount: 0,
   upcomingBookings: [],
+  availabilityBookings: [],
   totalBalanceDueMinor: 0,
   recentPayments: [],
 }
@@ -43,8 +44,6 @@ export function DashboardProvider({ service, children }: { service: DashboardSer
       setLoading(false)
     }
   }, [service])
-
-  useEffect(() => { void refresh() }, [refresh])
 
   return (
     <DashboardContext.Provider value={{ summary, loading, error, refresh }}>

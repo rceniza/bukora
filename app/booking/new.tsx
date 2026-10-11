@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { addDays, format } from 'date-fns'
-import { useRouter } from 'expo-router'
+import { useLocalSearchParams, useRouter } from 'expo-router'
 import { Pressable, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { BookingQuoteSummary } from '../../components/booking/BookingQuoteSummary'
@@ -19,7 +19,7 @@ import { calculateBookingQuote } from '../../src/domain/services/bookingQuote'
 import { bookingRepository } from '../../src/data/repositories/bookingRepository'
 import { formatPHPAmount } from '../../src/shared/utils/money'
 import { parsePHPAmountInput } from '../../src/shared/utils/moneyInput'
-import { checkoutAfterChangingCheckIn, minimumCheckoutDate } from '../../src/shared/utils/date'
+import { checkoutAfterChangingCheckIn, isValidISODate, minimumCheckoutDate, parseISODate } from '../../src/shared/utils/date'
 import { normalizePhoneNumber, type PhoneCountryCode } from '../../src/shared/utils/phone'
 import { BackButton } from '../../components/navigation/BackButton'
 import { FormScrollView } from '../../components/forms/FormScrollView'
@@ -69,12 +69,14 @@ function OptionToggle({
 
 export default function NewBookingRoute() {
   const router = useRouter()
+  const { checkInDate: routeCheckInDate } = useLocalSearchParams<{ checkInDate?: string }>()
+  const initialCheckInDate = typeof routeCheckInDate === 'string' && isValidISODate(routeCheckInDate) ? routeCheckInDate : todayISO()
   const { settings } = useAppSettings()
   const { refresh } = useDashboard()
   const [guest, setGuest] = useState<GuestDetailsValues>({ guestName: '', address: '', cellphone: '', email: '', pax: '' })
   const [phoneCountryCode, setPhoneCountryCode] = useState<PhoneCountryCode>('PH')
-  const [checkInDate, setCheckInDate] = useState(todayISO)
-  const [checkOutDate, setCheckOutDate] = useState(() => format(addDays(new Date(), 1), 'yyyy-MM-dd'))
+  const [checkInDate, setCheckInDate] = useState(initialCheckInDate)
+  const [checkOutDate, setCheckOutDate] = useState(() => format(addDays(parseISODate(initialCheckInDate) ?? new Date(), 1), 'yyyy-MM-dd'))
   const [notes, setNotes] = useState('')
   const [includeSecondRoom, setIncludeSecondRoom] = useState(false)
   const [rentVideokeWithOneRoom, setRentVideokeWithOneRoom] = useState(false)

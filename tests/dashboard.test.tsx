@@ -1,5 +1,12 @@
 import { render, screen } from '@testing-library/react-native'
+import type { PropsWithChildren } from 'react'
 import DashboardScreen from '../app/(tabs)/index'
+
+jest.mock('expo-router', () => ({
+  Link: ({ children }: PropsWithChildren) => children,
+  useRouter: () => ({ push: jest.fn() }),
+  useFocusEffect: () => undefined,
+}))
 
 describe('DashboardScreen', () => {
   it('shows the Bukora home screen and offline-first introduction', () => {

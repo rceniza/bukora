@@ -74,6 +74,7 @@ describe('selectDashboardSummary', () => {
     expect(summary.upcomingBookings[1].balanceDueMinor).toBe(390000)
     expect(summary.totalBalanceDueMinor).toBe(1160000)
     expect(summary.recentPayments).toEqual([payment])
+    expect(summary.availabilityBookings.map(({ id }) => id)).toEqual([records[0].booking.id, records[1].booking.id])
   })
 
   it('limits the visible upcoming list without losing the booking count', () => {
@@ -81,5 +82,21 @@ describe('selectDashboardSummary', () => {
     expect(summary.upcomingBookings).toHaveLength(1)
     expect(summary.bookingCount).toBe(4)
     expect(summary.upcomingCount).toBe(2)
+    expect(summary.availabilityBookings).toHaveLength(2)
+  })
+
+  it('includes active stays already in progress for calendar availability without changing the upcoming list', () => {
+    const inProgress = aggregate('00000000-0000-4000-8000-000000000009', '2026-10-05', 'confirmed', 590000)
+    inProgress.booking.checkOutDate = '2026-10-09'
+
+    const summary = selectDashboardSummary([...records, inProgress], [], '2026-10-07', 1)
+
+    expect(summary.upcomingBookings.map(({ id }) => id)).toEqual([records[1].booking.id])
+    expect(summary.availabilityBookings).toHaveLength(3)
+    expect(summary.availabilityBookings.find(({ id }) => id === inProgress.booking.id)).toMatchObject({
+      checkInDate: '2026-10-05',
+      checkOutDate: '2026-10-09',
+      status: 'confirmed',
+    })
   })
 })

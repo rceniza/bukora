@@ -11,10 +11,13 @@ export interface UpcomingBookingCard {
   balanceDueMinor: number
 }
 
+export type AvailabilityBooking = Pick<UpcomingBookingCard, 'id' | 'guestName' | 'checkInDate' | 'checkOutDate' | 'status'>
+
 export interface DashboardSummary {
   bookingCount: number
   upcomingCount: number
   upcomingBookings: UpcomingBookingCard[]
+  availabilityBookings: AvailabilityBooking[]
   totalBalanceDueMinor: number
   recentPayments: RecentPaymentActivity[]
 }
@@ -28,6 +31,15 @@ export function selectDashboardSummary(
   const upcoming = bookings
     .filter(({ booking }) => ['tentative', 'confirmed'].includes(booking.status) && booking.checkInDate >= today)
     .sort((left, right) => left.booking.checkInDate.localeCompare(right.booking.checkInDate))
+  const availabilityBookings = bookings
+    .filter(({ booking }) => booking.status === 'tentative' || booking.status === 'confirmed')
+    .map(({ booking }) => ({
+      id: booking.id,
+      guestName: booking.guestName,
+      checkInDate: booking.checkInDate,
+      checkOutDate: booking.checkOutDate,
+      status: booking.status,
+    }))
 
   const totalBalanceDueMinor = bookings
     .filter(({ booking }) => booking.status !== 'cancelled')
@@ -44,6 +56,7 @@ export function selectDashboardSummary(
       status: booking.status,
       balanceDueMinor: Math.max(0, calculateBalanceDueMinor(lineItems, payments)),
     })),
+    availabilityBookings,
     totalBalanceDueMinor,
     recentPayments,
   }

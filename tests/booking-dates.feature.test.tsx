@@ -1,20 +1,41 @@
 import { addDays, format } from 'date-fns'
 import { fireEvent, render, screen } from '@testing-library/react-native'
-import { useRouter } from 'expo-router'
+import { useLocalSearchParams, useRouter } from 'expo-router'
 import NewBookingRoute from '../app/booking/new'
 import { formatDisplayDate } from '../src/shared/utils/date'
 
-jest.mock('expo-router', () => ({ useRouter: jest.fn() }))
+jest.mock('expo-router', () => ({ useRouter: jest.fn(), useLocalSearchParams: jest.fn() }))
 jest.mock('@expo/vector-icons/Ionicons', () => ({ __esModule: true, default: () => null }))
 jest.mock('../src/data/repositories/bookingRepository', () => ({
   bookingRepository: { findOverlaps: jest.fn().mockResolvedValue([]) },
 }))
 
 const mockedUseRouter = jest.mocked(useRouter)
+const mockedUseLocalSearchParams = jest.mocked(useLocalSearchParams)
 
 describe('booking date selection', () => {
   beforeEach(() => {
     mockedUseRouter.mockReturnValue({ canGoBack: () => false, back: jest.fn(), replace: jest.fn() } as never)
+    mockedUseLocalSearchParams.mockReturnValue({} as never)
+  })
+
+  it('preselects a valid check-in date passed from availability and keeps checkout the following night', () => {
+    mockedUseLocalSearchParams.mockReturnValue({ checkInDate: '2026-10-20' } as never)
+
+    render(<NewBookingRoute />)
+
+    expect(screen.getByText(formatDisplayDate('2026-10-20'))).toBeTruthy()
+    expect(screen.getByText(formatDisplayDate('2026-10-21'))).toBeTruthy()
+    expect(screen.getByText('1 night')).toBeTruthy()
+  })
+
+  it('ignores malformed check-in route parameters and falls back to today', () => {
+    mockedUseLocalSearchParams.mockReturnValue({ checkInDate: '2026-02-30' } as never)
+
+    render(<NewBookingRoute />)
+
+    expect(screen.getByText(formatDisplayDate(format(new Date(), 'yyyy-MM-dd')))).toBeTruthy()
+    expect(screen.getByText(formatDisplayDate(format(addDays(new Date(), 1), 'yyyy-MM-dd')))).toBeTruthy()
   })
 
   it('moves checkout to the next night when check-in changes from a one-night default', () => {

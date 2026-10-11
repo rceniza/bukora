@@ -37,7 +37,7 @@ This can make handoffs and end-of-day reviews more consistent: the owner can see
 
 ## Features
 
-- **Dashboard:** upcoming reservations, balances due, and recent payment activity.
+- **Dashboard:** a month-by-month availability calendar, upcoming reservations, balances due, and recent payment activity. Available dates are green; tentative and confirmed stays mark each occupied night with an X. Tap an available date to start a booking with check-in prefilled, or tap a booked date to open its record.
 - **Bookings:** create and search bookings, browse a calendar, and filter active or cancelled records.
 - **Booking details:** guest information, date range, itemized price, payments, outstanding balance, and activity history.
 - **Booking changes:** edit guest details, reschedule, and cancel with history recorded.

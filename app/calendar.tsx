@@ -10,6 +10,7 @@ import { bookingRepository } from '../src/data/repositories/bookingRepository'
 import type { BookingAggregate } from '../src/domain/ports/BookingRepository'
 import { formatDisplayDate } from '../src/shared/utils/date'
 import { BackButton } from '../components/navigation/BackButton'
+import { buildBookingAvailabilityMap } from '../src/domain/services/bookingAvailability'
 
 export default function CalendarScreen() {
   const router = useRouter()
@@ -19,20 +20,13 @@ export default function CalendarScreen() {
   const [loading, setLoading] = useState(true)
   useEffect(() => { bookingRepository.listAll().then(setRecords).finally(() => setLoading(false)) }, [])
   const days = eachDayOfInterval({ start: startOfMonth(month), end: endOfMonth(month) })
-  const dateMap = useMemo(() => {
-    const map = new Map<string, BookingAggregate[]>()
-    for (const record of records) {
-      const { booking } = record
-      if (booking.status === 'cancelled') continue
-      const start = new Date(`${booking.checkInDate}T00:00:00`)
-      const end = new Date(`${booking.checkOutDate}T00:00:00`)
-      for (let cursor = start; cursor < end; cursor = new Date(cursor.getTime() + 86400000)) {
-        const key = format(cursor, 'yyyy-MM-dd')
-        map.set(key, [...(map.get(key) ?? []), record])
-      }
-    }
-    return map
-  }, [records])
+  const dateMap = useMemo(() => buildBookingAvailabilityMap(records.map(({ booking }) => ({
+    id: booking.id,
+    guestName: booking.guestName,
+    status: booking.status,
+    checkInDate: booking.checkInDate,
+    checkOutDate: booking.checkOutDate,
+  }))), [records])
   const selected = dateMap.get(selectedDay) ?? []
 
   return <SafeAreaView className="flex-1 bg-canvas"><ScrollView contentContainerClassName="mx-auto w-full max-w-2xl gap-5 px-5 py-6">
@@ -43,6 +37,6 @@ export default function CalendarScreen() {
       <View className="flex-row flex-wrap">{Array.from({ length: days[0].getDay() }, (_, index) => <View key={`blank-${index}`} className="h-12 w-[14.28%]" />)}{days.map((day) => { const key = format(day, 'yyyy-MM-dd'); const hasBooking = Boolean(dateMap.get(key)?.length); const active = selectedDay === key; return <Pressable key={key} onPress={() => setSelectedDay(key)} accessibilityRole="button" accessibilityLabel={`${format(day, 'MMMM d, yyyy')}${hasBooking ? ', booked' : ''}`} className={`h-12 w-[14.28%] items-center justify-center rounded-full ${active ? 'bg-cenere-600' : ''}`}><Text className={active ? 'font-semibold text-white' : 'text-ink'}>{format(day, 'd')}</Text>{hasBooking ? <View className={`absolute bottom-1 h-1 w-1 rounded-full ${active ? 'bg-white' : 'bg-cenere-600'}`} /> : null}</Pressable>})}</View>
     </SurfaceCard>
     <Text className="text-lg font-semibold text-ink">{formatDisplayDate(selectedDay)}</Text>
-    {loading ? <LoadingState message="Loading calendar" /> : selected.length === 0 ? <EmptyState title="No stays on this day" message="Choose another date to see its bookings." /> : selected.map(({ booking }) => <Pressable key={booking.id} onPress={() => router.push(`/booking/${booking.id}`)} accessibilityRole="button"><SurfaceCard className="gap-1"><Text className="font-semibold text-ink">{booking.guestName}</Text><Text className="text-sm text-muted">{formatDisplayDate(booking.checkInDate)} – {formatDisplayDate(booking.checkOutDate)}</Text></SurfaceCard></Pressable>)}
+    {loading ? <LoadingState message="Loading calendar" /> : selected.length === 0 ? <EmptyState title="No stays on this day" message="Choose another date to see its bookings." /> : selected.map((booking) => <Pressable key={booking.id} onPress={() => router.push(`/booking/${booking.id}`)} accessibilityRole="button"><SurfaceCard className="gap-1"><Text className="font-semibold text-ink">{booking.guestName}</Text><Text className="text-sm text-muted">{formatDisplayDate(booking.checkInDate)} – {formatDisplayDate(booking.checkOutDate)}</Text></SurfaceCard></Pressable>)}
   </ScrollView></SafeAreaView>
 }

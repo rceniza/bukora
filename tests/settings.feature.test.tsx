@@ -14,6 +14,8 @@ import DashboardScreen from '../app/(tabs)/index'
 
 jest.mock('expo-router', () => ({
   Link: ({ children }: PropsWithChildren) => children,
+  useRouter: () => ({ push: jest.fn() }),
+  useFocusEffect: () => undefined,
 }))
 
 describe('owner settings feature', () => {
