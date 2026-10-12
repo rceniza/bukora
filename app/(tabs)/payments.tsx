@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react'
-import { useLocalSearchParams, useRouter } from 'expo-router'
+import { useCallback, useMemo, useState } from 'react'
+import { format } from 'date-fns'
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
 import { Pressable, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { PaymentEntryForm } from '../../components/forms/PaymentEntryForm'
@@ -11,12 +12,15 @@ import type { BookingAggregate } from '../../src/domain/ports/BookingRepository'
 import { formatDisplayDate } from '../../src/shared/utils/date'
 import { formatPHPAmount } from '../../src/shared/utils/money'
 import { FormScrollView } from '../../components/forms/FormScrollView'
+import { AppTextField } from '../../components/ui/AppTextField'
+import { selectPaymentBookingChoices } from '../../src/domain/services/paymentBookingChoices'
 
 export default function PaymentsScreen() {
   const { bookingId: requestedId } = useLocalSearchParams<{ bookingId?: string }>()
   const router = useRouter()
   const [records, setRecords] = useState<BookingAggregate[]>([])
   const [selectedId, setSelectedId] = useState('')
+  const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const load = useCallback(async () => {
@@ -30,9 +34,10 @@ export default function PaymentsScreen() {
     } catch { setError('Payment records could not be loaded from this device.') }
     finally { setLoading(false) }
   }, [requestedId])
-  useEffect(() => { void load() }, [load])
+  useFocusEffect(useCallback(() => { void load() }, [load]))
 
   const selected = records.find(({ booking }) => booking.id === selectedId)
+  const bookingChoices = useMemo(() => selectPaymentBookingChoices(records, query, format(new Date(), 'yyyy-MM-dd')), [query, records])
   const entries = records.flatMap(({ booking, payments }) => payments.map((payment) => ({ booking, payment })))
     .sort((a, b) => b.payment.paidAt.localeCompare(a.payment.paidAt) || b.payment.createdAt.localeCompare(a.payment.createdAt))
   const netTotal = entries.reduce((total, { payment }) => total + (payment.kind === 'refund' ? -payment.amountMinor : payment.amountMinor), 0)
@@ -41,8 +46,11 @@ export default function PaymentsScreen() {
     <View><Text className="text-sm font-medium uppercase text-cenere-700">Money received</Text><Text className="mt-1 text-3xl font-bold text-ink">Payments</Text></View>
     {error ? <Text accessibilityRole="alert" className="text-sm text-red-700">{error}</Text> : null}
     <SurfaceCard className="gap-4"><Text className="text-lg font-semibold text-ink">Choose a booking</Text>
-      <Text className="text-sm font-medium text-ink">Booking</Text>
-      {records.length === 0 ? <EmptyState title="No bookings to pay" message="Add a booking before recording a payment." /> : <View className="gap-2">{records.map(({ booking }) => <Pressable key={booking.id} onPress={() => setSelectedId(booking.id)} accessibilityRole="button" accessibilityState={{ selected: selectedId === booking.id }} className={`rounded-2xl border p-3 ${selectedId === booking.id ? 'border-cenere-600 bg-cenere-50' : 'border-line bg-white'}`}><Text className="font-semibold text-ink">{booking.guestName}</Text><Text className="mt-1 text-xs text-muted">{formatDisplayDate(booking.checkInDate)} · {booking.status}</Text></Pressable>)}</View>}
+      {records.length === 0 ? <EmptyState title="No bookings to pay" message="Add a booking before recording a payment." /> : <>
+        <AppTextField label="Search by guest, phone, or check-in date" value={query} onChangeText={setQuery} />
+        {bookingChoices.items.length === 0 ? <EmptyState title={bookingChoices.searching ? 'No matching bookings' : 'No upcoming bookings'} message={bookingChoices.searching ? 'Try another guest name, phone number, or date.' : 'Search by guest, phone, or date to find a past booking.'} /> : <View className="gap-2">{bookingChoices.items.map(({ booking }) => <Pressable key={booking.id} onPress={() => setSelectedId(booking.id)} accessibilityRole="button" accessibilityState={{ selected: selectedId === booking.id }} className={`rounded-2xl border p-3 ${selectedId === booking.id ? 'border-cenere-600 bg-cenere-50' : 'border-line bg-white'}`}><View className="flex-row items-center justify-between gap-2"><Text className="flex-1 font-semibold text-ink">{booking.guestName}</Text><Text className={`text-xs font-semibold uppercase ${booking.status === 'tentative' || booking.status === 'cancelled' ? 'text-amber-700' : 'text-cenere-700'}`}>{booking.status.toUpperCase()}</Text></View><Text className="mt-1 text-xs text-muted">{formatDisplayDate(booking.checkInDate)} · {booking.cellphone}</Text></Pressable>)}</View>}
+        {bookingChoices.total > bookingChoices.items.length ? <Text className="text-xs text-muted">{bookingChoices.searching ? `Showing ${bookingChoices.items.length} of ${bookingChoices.total} matches. Refine your search to narrow the list.` : `Showing 5 of ${bookingChoices.total} upcoming bookings. Search to find another booking.`}</Text> : null}
+      </>}
     </SurfaceCard>
     {selected ? <PaymentEntryForm key={selected.booking.id} bookingId={selected.booking.id} bookingName={selected.booking.guestName} onRecorded={() => void load()} /> : null}
     <SurfaceCard className="gap-3"><View className="flex-row items-center justify-between"><Text className="text-lg font-semibold text-ink">Payment history</Text><Text className="text-sm font-semibold text-cenere-700">Net {formatPHPAmount(netTotal)}</Text></View>
