@@ -40,4 +40,14 @@ describe('SettingsService', () => {
     await expect(service.save({ ...DEFAULT_APP_SETTINGS, videokeRentalAmountMinor: -1 })).rejects.toThrow()
     await expect(service.save({ ...DEFAULT_APP_SETTINGS, confirmationDepositAmountMinor: -1 })).rejects.toThrow()
   })
+
+  it('validates reminder lead and repeat intervals', async () => {
+    const service = new SettingsService(new MemorySettingsRepository())
+    await expect(service.save({ ...DEFAULT_APP_SETTINGS, bookingReminderLeadHours: 0 })).rejects.toThrow()
+    await expect(service.save({ ...DEFAULT_APP_SETTINGS, bookingReminderLeadHours: 12, bookingReminderRepeatHours: 13 })).rejects.toThrow()
+    await expect(service.save({ ...DEFAULT_APP_SETTINGS, bookingReminderLeadHours: 12, bookingReminderRepeatHours: 6 })).resolves.toMatchObject({
+      bookingReminderLeadHours: 12,
+      bookingReminderRepeatHours: 6,
+    })
+  })
 })

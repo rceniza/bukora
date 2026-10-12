@@ -72,5 +72,8 @@ export interface AppSettings {
   additionalRoomAmountMinor: number
   videokeRentalAmountMinor: number
   confirmationDepositAmountMinor: number
+  bookingRemindersEnabled: boolean
+  bookingReminderLeadHours: number
+  bookingReminderRepeatHours: number
   currency: 'PHP'
 }

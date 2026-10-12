@@ -10,7 +10,14 @@ export const appSettingsSchema = z.object({
   additionalRoomAmountMinor: z.number().int().nonnegative().safe(),
   videokeRentalAmountMinor: z.number().int().nonnegative().safe(),
   confirmationDepositAmountMinor: z.number().int().nonnegative().safe().default(DEFAULT_APP_SETTINGS.confirmationDepositAmountMinor),
+  bookingRemindersEnabled: z.boolean().default(DEFAULT_APP_SETTINGS.bookingRemindersEnabled),
+  bookingReminderLeadHours: z.number().int().min(1).max(720).default(DEFAULT_APP_SETTINGS.bookingReminderLeadHours),
+  bookingReminderRepeatHours: z.number().int().min(0).max(720).default(DEFAULT_APP_SETTINGS.bookingReminderRepeatHours),
   currency: z.literal('PHP'),
+}).superRefine((settings, context) => {
+  if (settings.bookingReminderRepeatHours > 0 && settings.bookingReminderRepeatHours > settings.bookingReminderLeadHours) {
+    context.addIssue({ code: 'custom', path: ['bookingReminderRepeatHours'], message: 'Repeat interval must be no longer than the reminder lead time.' })
+  }
 })
 
 const settingKeys = [
@@ -20,6 +27,9 @@ const settingKeys = [
   'additionalRoomAmountMinor',
   'videokeRentalAmountMinor',
   'confirmationDepositAmountMinor',
+  'bookingRemindersEnabled',
+  'bookingReminderLeadHours',
+  'bookingReminderRepeatHours',
   'currency',
 ] as const satisfies readonly (keyof AppSettings)[]
 
@@ -39,6 +49,11 @@ export class SettingsService {
       additionalRoomAmountMinor: Number(values.get('additionalRoomAmountMinor') ?? DEFAULT_APP_SETTINGS.additionalRoomAmountMinor),
       videokeRentalAmountMinor: Number(values.get('videokeRentalAmountMinor') ?? DEFAULT_APP_SETTINGS.videokeRentalAmountMinor),
       confirmationDepositAmountMinor: Number(values.get('confirmationDepositAmountMinor') ?? DEFAULT_APP_SETTINGS.confirmationDepositAmountMinor),
+      bookingRemindersEnabled: values.get('bookingRemindersEnabled') === undefined
+        ? DEFAULT_APP_SETTINGS.bookingRemindersEnabled
+        : values.get('bookingRemindersEnabled') === 'true',
+      bookingReminderLeadHours: Number(values.get('bookingReminderLeadHours') ?? DEFAULT_APP_SETTINGS.bookingReminderLeadHours),
+      bookingReminderRepeatHours: Number(values.get('bookingReminderRepeatHours') ?? DEFAULT_APP_SETTINGS.bookingReminderRepeatHours),
       currency: values.get('currency') ?? DEFAULT_APP_SETTINGS.currency,
     }
     const parsed = appSettingsSchema.safeParse(candidate)

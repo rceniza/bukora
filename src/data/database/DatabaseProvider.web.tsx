@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { AppSettingsProvider } from '../../application/settings/AppSettingsContext'
+import { BookingReminderProvider } from '../../application/settings/BookingReminderProvider'
 import { SettingsService } from '../../application/services/SettingsService'
 import { DashboardService } from '../../application/services/DashboardService'
 import { DashboardProvider } from '../../application/dashboard/DashboardContext'
@@ -12,7 +13,9 @@ const dashboardService = new DashboardService(dashboardRepository)
 export function DatabaseProvider({ children }: { children: ReactNode }) {
   return (
     <AppSettingsProvider service={settingsService}>
-      <DashboardProvider service={dashboardService}>{children}</DashboardProvider>
+      <BookingReminderProvider>
+        <DashboardProvider service={dashboardService}>{children}</DashboardProvider>
+      </BookingReminderProvider>
     </AppSettingsProvider>
   )
 }

@@ -18,6 +18,10 @@ jest.mock('expo-router', () => ({
   useFocusEffect: () => undefined,
 }))
 
+jest.mock('../src/application/settings/BookingReminderProvider', () => ({
+  useBookingReminders: () => ({ requestPermission: jest.fn(async () => true), refresh: jest.fn(async () => undefined) }),
+}))
+
 describe('owner settings feature', () => {
   it('saves the display name and price defaults to SQLite for future bookings', async () => {
     const { database, client } = await createMemorySqlite(migration)
@@ -46,6 +50,9 @@ describe('owner settings feature', () => {
       fireEvent.changeText(await screen.findByDisplayValue('Bukora'), 'Cenere Ledger')
       fireEvent.changeText(screen.getByLabelText('Night-use package (PHP)'), '6100')
       fireEvent.changeText(screen.getByLabelText('Initial payment required to confirm (PHP)'), '1750')
+      fireEvent(screen.getByRole('switch', { name: 'Booking reminders' }), 'valueChange', true)
+      fireEvent.changeText(screen.getByLabelText('Remind me (hours before check-in)'), '36')
+      fireEvent.changeText(screen.getByLabelText('Repeat every (hours; optional)'), '6')
       fireEvent.press(screen.getByRole('button', { name: 'Save settings' }))
 
       expect(await screen.findByText('Settings saved on this device.')).toBeTruthy()
@@ -54,6 +61,9 @@ describe('owner settings feature', () => {
           displayName: 'Cenere Ledger',
           nightUseAmountMinor: 610000,
           confirmationDepositAmountMinor: 175000,
+          bookingRemindersEnabled: true,
+          bookingReminderLeadHours: 36,
+          bookingReminderRepeatHours: 6,
         })
       })
       expect((await bookingRepository.findById(existingBooking.booking.id))?.lineItems[0].totalAmountMinor).toBe(590000)

@@ -44,6 +44,7 @@ This can make handoffs and end-of-day reviews more consistent: the owner can see
 - **Deposit-based confirmation:** new bookings are tentative until the configured initial payment is recorded. Bukora records the automatic confirmation in the booking history.
 - **Flexible line items:** add custom charges such as catering or appliance use, or discounts. Party size is recorded for information and does not add a per-person fee.
 - **Settings:** customize the in-app display name, property name, default package prices, confirmation deposit, and currency.
+- **Local booking reminders:** optionally schedule on-device reminders for confirmed bookings, choose how many hours before check-in to start, and set an optional repeat interval. Tentative and cancelled bookings never get reminder notifications. The schedule is refreshed after booking changes and when the app returns to the foreground.
 - **Backup and restore:** export a versioned backup and validate it before replacing the current ledger.
 - **Offline storage:** native iOS and Android builds use SQLite on the device. No network is required for booking work.
 
@@ -70,9 +71,14 @@ The mobile interface follows the supplied hotel-app reference's calm, image-frie
 
 The main sections are **Dashboard**, **Bookings**, and **Settings**. Payment entry and history are attached to each booking; the Dashboard's Recent payments preview links back to the associated booking. The booking flow also includes calendar selection, a live price breakdown, and a booking detail view. The interface is built with React Native and Expo Router so shared screens and UI components work across iOS, Android, and the browser preview.
 
+### Local reminders
+
+Open **Settings → Booking reminders** to enable reminders and set the lead time (1–720 hours before 9:00 AM on the check-in date). Enter a repeat interval to receive additional reminders; leave it blank for one notification. Repeats stop at check-in. Enabling reminders requires notification permission on the device. Reminders are scheduled locally and work without a server or internet connection. A notification opens the related booking. The app badge reflects confirmed bookings currently inside their reminder window; icon badge display on Android depends on the device launcher, while iOS requires notification badge permission. The browser preview does not schedule notifications.
+
 ## Technology and architecture
 
 - **Expo SDK 54**, **React Native 0.81**, and **TypeScript** for cross-platform app development.
+- **Expo Notifications** for native local notifications and app badge counts.
 - **Expo Router** for navigation.
 - **Expo SQLite** and **Drizzle ORM** for native local persistence and migrations.
 - **UUID text IDs** for bookings, line items, payments, and activity records.

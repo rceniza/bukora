@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { ActivityIndicator, Text, View } from 'react-native'
+import { ActivityIndicator, Platform, Switch, Text, View } from 'react-native'
 import { AppTextField } from '../../components/ui/AppTextField'
 import { PrimaryButton } from '../../components/ui/PrimaryButton'
 import { SectionHeading } from '../../components/ui/SectionHeading'
@@ -11,6 +11,7 @@ import { useAppSettings } from '../../src/application/settings/AppSettingsContex
 import type { AppSettings } from '../../src/domain/models'
 import { parsePHPAmountInput } from '../../src/shared/utils/moneyInput'
 import { FormScrollView } from '../../components/forms/FormScrollView'
+import { useBookingReminders } from '../../src/application/settings/BookingReminderProvider'
 
 interface SettingsDraft {
   displayName: string
@@ -19,6 +20,9 @@ interface SettingsDraft {
   additionalRoomAmount: string
   videokeRentalAmount: string
   confirmationDepositAmount: string
+  bookingRemindersEnabled: boolean
+  bookingReminderLeadHours: string
+  bookingReminderRepeatHours: string
 }
 
 function toDraft(settings: AppSettings): SettingsDraft {
@@ -29,11 +33,15 @@ function toDraft(settings: AppSettings): SettingsDraft {
     additionalRoomAmount: (settings.additionalRoomAmountMinor / 100).toFixed(2),
     videokeRentalAmount: (settings.videokeRentalAmountMinor / 100).toFixed(2),
     confirmationDepositAmount: (settings.confirmationDepositAmountMinor / 100).toFixed(2),
+    bookingRemindersEnabled: settings.bookingRemindersEnabled,
+    bookingReminderLeadHours: String(settings.bookingReminderLeadHours),
+    bookingReminderRepeatHours: settings.bookingReminderRepeatHours ? String(settings.bookingReminderRepeatHours) : '',
   }
 }
 
 export default function SettingsScreen() {
   const { settings, ready, saveSettings } = useAppSettings()
+  const { requestPermission, refresh: refreshReminders } = useBookingReminders()
   const [draft, setDraft] = useState(() => toDraft(settings))
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
@@ -52,6 +60,8 @@ export default function SettingsScreen() {
     const additionalRoomAmountMinor = parsePHPAmountInput(draft.additionalRoomAmount)
     const videokeRentalAmountMinor = parsePHPAmountInput(draft.videokeRentalAmount)
     const confirmationDepositAmountMinor = parsePHPAmountInput(draft.confirmationDepositAmount)
+    const bookingReminderLeadHours = Number(draft.bookingReminderLeadHours)
+    const bookingReminderRepeatHours = draft.bookingReminderRepeatHours.trim() ? Number(draft.bookingReminderRepeatHours) : 0
     if (nightUseAmountMinor === null || additionalRoomAmountMinor === null || videokeRentalAmountMinor === null || confirmationDepositAmountMinor === null) {
       setErrors({
         nightUseAmount: nightUseAmountMinor === null ? 'Enter a PHP amount with up to two decimal places.' : '',
@@ -70,6 +80,9 @@ export default function SettingsScreen() {
       additionalRoomAmountMinor,
       videokeRentalAmountMinor,
       confirmationDepositAmountMinor,
+      bookingRemindersEnabled: draft.bookingRemindersEnabled,
+      bookingReminderLeadHours,
+      bookingReminderRepeatHours,
     })
     if (!parsed.success) {
       const issue = parsed.error.issues[0]
@@ -80,7 +93,15 @@ export default function SettingsScreen() {
 
     setSaving(true)
     try {
+      if (parsed.data.bookingRemindersEnabled && !settings.bookingRemindersEnabled && Platform.OS !== 'web') {
+        const permissionGranted = await requestPermission()
+        if (!permissionGranted) {
+          setNotice('Allow notifications in your device settings before enabling booking reminders.')
+          return
+        }
+      }
       await saveSettings(parsed.data)
+      await refreshReminders()
       setErrors({})
       setNotice('Settings saved on this device.')
     } catch {
@@ -157,9 +178,47 @@ export default function SettingsScreen() {
             keyboardType="decimal-pad"
             helper="New bookings stay tentative until payments reach this amount. Changes apply to new bookings only."
           />
+        </SurfaceCard>
+        <SurfaceCard className="gap-5">
+          <SectionHeading title="Booking reminders" />
+          <View className="flex-row items-center justify-between gap-4">
+            <View className="flex-1 gap-1">
+              <Text className="font-semibold text-ink">Confirmed bookings only</Text>
+              <Text className="text-sm leading-5 text-muted">Get an on-device notification before check-in.</Text>
+            </View>
+            <Switch
+              accessibilityRole="switch"
+              accessibilityLabel="Booking reminders"
+              value={draft.bookingRemindersEnabled}
+              onValueChange={(value) => {
+                setDraft((current) => ({ ...current, bookingRemindersEnabled: value }))
+                setNotice('')
+              }}
+              trackColor={{ false: '#D1D5DB', true: '#51B27B' }}
+            />
+          </View>
+          <AppTextField
+            label="Remind me (hours before check-in)"
+            value={draft.bookingReminderLeadHours}
+            onChangeText={(value) => updateDraft('bookingReminderLeadHours', value)}
+            error={errors.bookingReminderLeadHours}
+            helper="Hours are counted back from 9:00 AM on the check-in date. Choose 1 to 720 hours."
+            keyboardType="number-pad"
+          />
+          <AppTextField
+            label="Repeat every (hours; optional)"
+            value={draft.bookingReminderRepeatHours}
+            onChangeText={(value) => updateDraft('bookingReminderRepeatHours', value)}
+            error={errors.bookingReminderRepeatHours}
+            helper="Leave blank for one reminder. Repeats stop at check-in."
+            keyboardType="number-pad"
+          />
+          {Platform.OS === 'web' ? <Text className="text-sm text-muted">Local reminders are available in the Android and iOS apps.</Text> : null}
+        </SurfaceCard>
+        <View className="gap-3">
           <PrimaryButton label="Save settings" loading={saving} onPress={handleSave} />
           {notice ? <Text className="text-center text-sm text-muted" accessibilityLiveRegion="polite">{notice}</Text> : null}
-        </SurfaceCard>
+        </View>
         <SurfaceCard className="gap-3">
           <SectionHeading title="Data safety" />
           <Text className="text-sm leading-5 text-muted">Create a portable backup of your bookings, payments, settings, and activity history.</Text>

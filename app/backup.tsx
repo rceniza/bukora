@@ -8,6 +8,7 @@ import { BackupService } from '../src/application/services/BackupService'
 import type { BackupDocument } from '../src/application/services/BackupService'
 import { useAppSettings } from '../src/application/settings/AppSettingsContext'
 import { useDashboard } from '../src/application/dashboard/DashboardContext'
+import { useBookingReminders } from '../src/application/settings/BookingReminderProvider'
 import { backupFileGateway } from '../src/data/repositories/backupFileGateway'
 import { backupStorage } from '../src/data/repositories/backupStorage'
 import { BackButton } from '../components/navigation/BackButton'
@@ -15,6 +16,7 @@ import { BackButton } from '../components/navigation/BackButton'
 export default function BackupScreen() {
   const { saveSettings } = useAppSettings()
   const { refresh } = useDashboard()
+  const { refresh: refreshReminders } = useBookingReminders()
   const service = useMemo(() => new BackupService(backupStorage), [])
   const [preview, setPreview] = useState<BackupDocument | null>(null)
   const [busy, setBusy] = useState(false)
@@ -46,6 +48,7 @@ export default function BackupScreen() {
       await service.restore(preview)
       await saveSettings(preview.settings)
       await refresh()
+      await refreshReminders()
       setNotice(`Restored ${preview.bookings.length} bookings and their payments and history.`)
       setPreview(null)
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Backup could not be restored.') }

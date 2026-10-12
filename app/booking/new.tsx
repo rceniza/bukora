@@ -13,6 +13,7 @@ import { PrimaryButton } from '../../components/ui/PrimaryButton'
 import { SurfaceCard } from '../../components/ui/SurfaceCard'
 import { CreateBookingService } from '../../src/application/services/CreateBookingService'
 import { useAppSettings } from '../../src/application/settings/AppSettingsContext'
+import { useBookingReminders } from '../../src/application/settings/BookingReminderProvider'
 import { useDashboard } from '../../src/application/dashboard/DashboardContext'
 import { bookingFormSchema } from '../../src/domain/schemas/booking'
 import { calculateBookingQuote } from '../../src/domain/services/bookingQuote'
@@ -31,6 +32,7 @@ export default function NewBookingRoute() {
   const initialCheckInDate = typeof routeCheckInDate === 'string' && isValidISODate(routeCheckInDate) ? routeCheckInDate : todayISO()
   const { settings } = useAppSettings()
   const { refresh } = useDashboard()
+  const { refresh: refreshReminders } = useBookingReminders()
   const [guest, setGuest] = useState<GuestDetailsValues>({ guestName: '', address: '', cellphone: '', email: '', pax: '' })
   const [phoneCountryCode, setPhoneCountryCode] = useState<PhoneCountryCode>('PH')
   const [checkInDate, setCheckInDate] = useState(initialCheckInDate)
@@ -141,6 +143,7 @@ export default function NewBookingRoute() {
 
       setOverlaps([])
       await createBookingService.create({ booking: bookingInput, pricing })
+      await refreshReminders()
       await refresh()
       router.replace('/')
     } catch (cause) {
