@@ -39,15 +39,6 @@ export default function MainTabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="payments"
-        options={{
-          title: 'Payments',
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? 'wallet' : 'wallet-outline'} size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="settings"
         options={{
           title: 'Settings',

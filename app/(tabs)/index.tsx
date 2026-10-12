@@ -51,12 +51,6 @@ export default function DashboardScreen() {
             <Text className="font-semibold text-cenere-700">View all bookings</Text>
           </Pressable>
         </Link>
-        <Link href="/payments" asChild>
-          <Pressable accessibilityRole="button" className="-mt-3 items-center rounded-2xl border border-line bg-white px-4 py-3">
-            <Text className="font-semibold text-ink">Payments and refunds</Text>
-          </Pressable>
-        </Link>
-
         <View className="flex-row gap-3">
           <SurfaceCard padded={false} className="flex-1 p-4">
             <Text className="text-sm text-muted">Upcoming</Text>
@@ -105,7 +99,8 @@ export default function DashboardScreen() {
               : summary.recentPayments.length === 0 ? (
                 <EmptyState title="No payments recorded" message="Payments and refunds will appear here when recorded against a booking." />
               ) : summary.recentPayments.map((payment) => (
-                <View key={payment.id} className="flex-row items-center justify-between gap-3 border-b border-line py-3 last:border-b-0">
+                <Pressable key={payment.id} onPress={() => router.push(`/booking/${payment.bookingId}`)} accessibilityRole="button" accessibilityLabel={`View payment history for ${payment.guestName}`}>
+                <View className="flex-row items-center justify-between gap-3 border-b border-line py-3 last:border-b-0">
                   <View className="flex-1 gap-1">
                     <Text className="text-sm font-semibold text-ink">{payment.guestName}</Text>
                     <Text className="text-xs text-muted">{formatDisplayDate(payment.paidAt)} · {payment.method ?? payment.kind}</Text>
@@ -115,6 +110,7 @@ export default function DashboardScreen() {
                     {payment.kind === 'refund' ? '−' : '+'}{formatPHPAmount(payment.amountMinor)}
                   </Text>
                 </View>
+                </Pressable>
               ))}
         </SurfaceCard>
       </ScrollView>

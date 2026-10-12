@@ -1,6 +1,6 @@
 import { addDays, format } from 'date-fns'
 import { act, fireEvent, render, screen } from '@testing-library/react-native'
-import type { BookingId } from '../src/domain/models'
+import type { BookingId, PaymentId } from '../src/domain/models'
 import type { DashboardSummary } from '../src/domain/services/dashboardSummary'
 import DashboardScreen from '../app/(tabs)/index'
 
@@ -36,7 +36,12 @@ jest.mock('../src/application/dashboard/DashboardContext', () => ({
 }))
 
 describe('dashboard availability calendar feature', () => {
-  beforeEach(() => { mockPush.mockClear(); mockRefresh.mockClear(); mockFocusCallback = undefined })
+  beforeEach(() => {
+    mockPush.mockClear()
+    mockRefresh.mockClear()
+    mockFocusCallback = undefined
+    mockSummary = { ...mockSummary, recentPayments: [] }
+  })
 
   it('places the availability calendar directly above upcoming bookings', () => {
     const { toJSON } = render(<DashboardScreen />)
@@ -62,6 +67,29 @@ describe('dashboard availability calendar feature', () => {
     render(<DashboardScreen />)
     fireEvent.press(screen.getByLabelText('Open full calendar'))
     expect(mockPush).toHaveBeenCalledWith('/calendar')
+  })
+
+  it('opens the related booking when a recent payment is selected', () => {
+    const bookingId = '20000000-0000-4000-8000-000000000001' as BookingId
+    mockSummary = {
+      ...mockSummary,
+      recentPayments: [{
+        id: '30000000-0000-4000-8000-000000000001' as PaymentId,
+        bookingId,
+        kind: 'payment',
+        amountMinor: 100000,
+        paidAt: '2026-10-01',
+        method: 'GCash',
+        transactionReference: 'DP-123',
+        notes: null,
+        createdAt: '2026-10-01T10:00:00.000Z',
+        guestName: 'Lea Santos',
+      }],
+    }
+    render(<DashboardScreen />)
+
+    fireEvent.press(screen.getByLabelText('View payment history for Lea Santos'))
+    expect(mockPush).toHaveBeenCalledWith(`/booking/${bookingId}`)
   })
 
   it('refreshes availability whenever the dashboard regains focus', () => {

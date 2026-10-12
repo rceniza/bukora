@@ -39,11 +39,10 @@ This can make handoffs and end-of-day reviews more consistent: the owner can see
 
 - **Dashboard:** a month-by-month availability calendar, upcoming reservations, balances due, and recent payment activity. Available dates are green; tentative and confirmed stays mark each occupied night with an X. Tap an available date to start a booking with check-in prefilled, or tap a booked date to open its record.
 - **Bookings:** create and search bookings, browse a calendar, and filter active or cancelled records.
-- **Booking details:** guest information, date range, itemized price, payments, outstanding balance, and activity history.
+- **Booking details:** guest information, date range, itemized price, outstanding balance, and activity history. Add payments or refunds directly to a booking and review its payment history, dates, methods, references, notes, and balance together.
 - **Booking changes:** edit guest details, reschedule, and cancel with history recorded.
 - **Deposit-based confirmation:** new bookings are tentative until the configured initial payment is recorded. Bukora records the automatic confirmation in the booking history.
 - **Flexible line items:** add custom charges such as catering or appliance use, or discounts. Party size is recorded for information and does not add a per-person fee.
-- **Payments:** record multiple payments and refunds with date, method, transaction reference, and notes.
 - **Settings:** customize the in-app display name, property name, default package prices, confirmation deposit, and currency.
 - **Backup and restore:** export a versioned backup and validate it before replacing the current ledger.
 - **Offline storage:** native iOS and Android builds use SQLite on the device. No network is required for booking work.
@@ -69,7 +68,7 @@ The current booking rules model one night-use package, one included room, an opt
 
 The mobile interface follows the supplied hotel-app reference's calm, image-friendly style: light surfaces, rounded cards and controls, generous spacing, readable booking summaries, and restrained green accents for primary actions and selected states. Bukora adapts that visual direction to a single business ledger rather than travel discovery.
 
-The main sections are **Dashboard**, **Bookings**, **Payments**, and **Settings**. The booking flow also includes calendar selection, a live price breakdown, and a booking detail view. The interface is built with React Native and Expo Router so shared screens and UI components work across iOS, Android, and the browser preview.
+The main sections are **Dashboard**, **Bookings**, and **Settings**. Payment entry and history are attached to each booking; the Dashboard's Recent payments preview links back to the associated booking. The booking flow also includes calendar selection, a live price breakdown, and a booking detail view. The interface is built with React Native and Expo Router so shared screens and UI components work across iOS, Android, and the browser preview.
 
 ## Technology and architecture
 
