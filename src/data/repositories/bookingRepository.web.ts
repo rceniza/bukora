@@ -1,5 +1,5 @@
 import type { Booking, BookingActivity, BookingId, BookingLineItem, BookingPayment } from '../../domain/models'
-import type { BookingAggregate, BookingRepository, CreateBookingRecord } from '../../domain/ports/BookingRepository'
+import type { BookingAggregate, BookingListCursor, BookingRepository, BookingPage, BookingPageRequest, CreateBookingRecord } from '../../domain/ports/BookingRepository'
 
 const STORAGE_KEY = 'bukora.bookings'
 
@@ -24,6 +24,36 @@ export class LocalStorageBookingRepository implements BookingRepository {
 
   async listAll(): Promise<BookingAggregate[]> {
     return this.read()
+  }
+
+  async listPage(request: BookingPageRequest): Promise<BookingPage> {
+    const limit = Math.max(1, Math.min(Math.floor(request.limit) || 20, 100))
+    const query = request.query.trim().toLocaleLowerCase()
+    const cursor = request.cursor
+    const records = this.read().filter(({ booking }) => {
+      const matchesFilter = request.filter === 'all'
+        || (request.filter === 'cancelled'
+          ? booking.status === 'cancelled'
+          : booking.status !== 'cancelled' && booking.checkOutDate >= request.today)
+      const matchesQuery = !query || [booking.guestName, booking.cellphone, booking.email ?? '']
+        .some((value) => value.toLocaleLowerCase().includes(query))
+      const afterCursor = !cursor
+        || booking.checkInDate > cursor.checkInDate
+        || (booking.checkInDate === cursor.checkInDate && booking.createdAt > cursor.createdAt)
+        || (booking.checkInDate === cursor.checkInDate && booking.createdAt === cursor.createdAt && booking.id > cursor.id)
+      return matchesFilter && matchesQuery && afterCursor
+    }).sort((left, right) => left.booking.checkInDate.localeCompare(right.booking.checkInDate)
+      || left.booking.createdAt.localeCompare(right.booking.createdAt)
+      || left.booking.id.localeCompare(right.booking.id))
+    const hasMore = records.length > limit
+    const page = hasMore ? records.slice(0, limit) : records
+    const lastBooking = page.at(-1)?.booking
+    const nextCursor: BookingListCursor | null = hasMore && lastBooking ? {
+      checkInDate: lastBooking.checkInDate,
+      createdAt: lastBooking.createdAt,
+      id: lastBooking.id,
+    } : null
+    return { records: page, nextCursor, hasMore }
   }
 
   async findById(id: BookingId): Promise<BookingAggregate | null> {

@@ -1,0 +1,1 @@
+CREATE INDEX `bookings_checkin_cursor_idx` ON `bookings` (`check_in_date`,`created_at`,`id`);

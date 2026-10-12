@@ -13,7 +13,7 @@ jest.mock('expo-router', () => ({
 }))
 
 jest.mock('../src/data/repositories/bookingRepository', () => ({
-  bookingRepository: { listAll: jest.fn() },
+  bookingRepository: { listPage: jest.fn() },
 }))
 
 const record = (status: 'tentative' | 'cancelled'): BookingAggregate => ({
@@ -30,7 +30,7 @@ const record = (status: 'tentative' | 'cancelled'): BookingAggregate => ({
 describe('booking list refresh feature', () => {
   beforeEach(() => {
     mockFocusCallback = undefined
-    jest.mocked(bookingRepository.listAll).mockResolvedValue([record('tentative')])
+    jest.mocked(bookingRepository.listPage).mockResolvedValue({ records: [record('tentative')], nextCursor: null, hasMore: false })
   })
 
   it('reloads status when the owner returns to the list after cancelling a booking', async () => {
@@ -39,10 +39,10 @@ describe('booking list refresh feature', () => {
     expect(await screen.findByText('tentative')).toBeTruthy()
     fireEvent.press(screen.getByRole('button', { name: 'All' }))
 
-    jest.mocked(bookingRepository.listAll).mockResolvedValue([record('cancelled')])
+    jest.mocked(bookingRepository.listPage).mockResolvedValue({ records: [record('cancelled')], nextCursor: null, hasMore: false })
     await act(async () => { mockFocusCallback?.() })
 
     await waitFor(() => expect(screen.getByText('cancelled')).toBeTruthy())
-    expect(bookingRepository.listAll).toHaveBeenCalledTimes(2)
+    expect(bookingRepository.listPage).toHaveBeenCalledTimes(2)
   })
 })

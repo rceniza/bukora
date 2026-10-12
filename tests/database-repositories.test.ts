@@ -93,6 +93,35 @@ describe('SQLite repositories and schema migration', () => {
     expect(await repository.findById('e3d73b08-7d4c-4ecf-b5f4-62da231ad721' as BookingId)).toBeNull()
   })
 
+  it('pages SQLite booking aggregates in stable order and applies filters and search before paging', async () => {
+    const repository = new SqliteBookingRepository(client)
+    const fixture = [
+      ['10000000-0000-4000-8000-000000000003', 'Upcoming C', 'confirmed', '2026-11-12', '2026-11-13'],
+      ['10000000-0000-4000-8000-000000000001', 'Upcoming A', 'confirmed', '2026-11-10', '2026-11-11'],
+      ['10000000-0000-4000-8000-000000000002', 'Cancelled B', 'cancelled', '2026-11-11', '2026-11-12'],
+      ['10000000-0000-4000-8000-000000000004', 'Upcoming D', 'tentative', '2026-11-13', '2026-11-14'],
+    ] as const
+    for (const [id, guestName, status, checkIn, checkOut] of fixture) {
+      database.run(`INSERT INTO bookings (id, status, confirmation_deposit_amount_minor, guest_name, cellphone, pax, check_in_date, check_out_date, created_at, updated_at)
+        VALUES (?, ?, 100000, ?, '09171234567', 2, ?, ?, ?, ?)`, [id, status, guestName, checkIn, checkOut, now, now])
+    }
+
+    const firstPage = await repository.listPage({ filter: 'all', query: '', today: '2026-11-01', limit: 2 })
+    expect(firstPage.records.map(({ booking }) => booking.guestName)).toEqual(['Upcoming A', 'Cancelled B'])
+    expect(firstPage.hasMore).toBe(true)
+    expect(firstPage.nextCursor).toEqual({ checkInDate: '2026-11-11', createdAt: now, id: fixture[2][0] })
+
+    const secondPage = await repository.listPage({ filter: 'all', query: '', today: '2026-11-01', limit: 2, cursor: firstPage.nextCursor })
+    expect(secondPage.records.map(({ booking }) => booking.guestName)).toEqual(['Upcoming C', 'Upcoming D'])
+    expect(secondPage.hasMore).toBe(false)
+    expect(secondPage.nextCursor).toBeNull()
+
+    const upcoming = await repository.listPage({ filter: 'upcoming', query: 'upcoming', today: '2026-11-11', limit: 5 })
+    expect(upcoming.records.map(({ booking }) => booking.guestName)).toEqual(['Upcoming A', 'Upcoming C', 'Upcoming D'])
+    const cancelled = await repository.listPage({ filter: 'cancelled', query: 'cancelled', today: '2026-11-01', limit: 5 })
+    expect(cancelled.records.map(({ booking }) => booking.guestName)).toEqual(['Cancelled B'])
+  })
+
   it('rolls back partial booking inserts and enforces foreign keys and date constraints', async () => {
     const repository = new SqliteBookingRepository(client)
     const booking = makeBooking()

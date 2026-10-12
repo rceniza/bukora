@@ -15,6 +15,13 @@
       "when": 1791570620011,
       "tag": "0001_boring_human_torch",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1791765165834,
+      "tag": "0002_steady_phil_sheldon",
+      "breakpoints": true
     }
   ]
 }

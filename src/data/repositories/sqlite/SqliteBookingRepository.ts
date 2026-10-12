@@ -1,5 +1,5 @@
 import type { BookingActivity, BookingId, BookingLineItem, BookingPayment, Booking, UUID } from '../../../domain/models'
-import type { BookingAggregate, BookingRepository, CreateBookingRecord } from '../../../domain/ports/BookingRepository'
+import type { BookingAggregate, BookingListCursor, BookingRepository, BookingPage, BookingPageRequest, CreateBookingRecord } from '../../../domain/ports/BookingRepository'
 import type { SqliteClient } from '../../database/SqliteClient'
 
 interface BookingRow {
@@ -43,6 +43,46 @@ export class SqliteBookingRepository implements BookingRepository {
     const rows = await this.client.all<{ id: BookingId }>('SELECT id FROM bookings ORDER BY check_in_date, created_at, id')
     return (await Promise.all(rows.map(({ id }) => this.findById(id))))
       .filter((booking): booking is BookingAggregate => booking !== null)
+  }
+
+  async listPage(request: BookingPageRequest): Promise<BookingPage> {
+    const limit = Math.max(1, Math.min(Math.floor(request.limit) || 20, 100))
+    const clauses: string[] = []
+    const values: (string | number | null)[] = []
+    if (request.filter === 'upcoming') {
+      clauses.push("status != 'cancelled' AND check_out_date >= ?")
+      values.push(request.today)
+    } else if (request.filter === 'cancelled') {
+      clauses.push("status = 'cancelled'")
+    }
+    const query = request.query.trim()
+    if (query) {
+      clauses.push("(guest_name LIKE ? COLLATE NOCASE OR cellphone LIKE ? COLLATE NOCASE OR email LIKE ? COLLATE NOCASE)")
+      const pattern = `%${query}%`
+      values.push(pattern, pattern, pattern)
+    }
+    if (request.cursor) {
+      clauses.push(`(check_in_date > ? OR (check_in_date = ? AND created_at > ?)
+        OR (check_in_date = ? AND created_at = ? AND id > ?))`)
+      values.push(request.cursor.checkInDate, request.cursor.checkInDate, request.cursor.createdAt,
+        request.cursor.checkInDate, request.cursor.createdAt, request.cursor.id)
+    }
+    const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : ''
+    const rows = await this.client.all<Pick<Booking, 'id'>>(
+      `SELECT id FROM bookings ${where} ORDER BY check_in_date, created_at, id LIMIT ?`,
+      [...values, limit + 1],
+    )
+    const hasMore = rows.length > limit
+    const pageRows = hasMore ? rows.slice(0, limit) : rows
+    const records = (await Promise.all(pageRows.map(({ id }) => this.findById(id))))
+      .filter((record): record is BookingAggregate => record !== null)
+    const lastBooking = records.at(-1)?.booking
+    const nextCursor: BookingListCursor | null = hasMore && lastBooking ? {
+      checkInDate: lastBooking.checkInDate,
+      createdAt: lastBooking.createdAt,
+      id: lastBooking.id,
+    } : null
+    return { records, nextCursor, hasMore }
   }
 
   async create({ booking, lineItems, initialActivity }: CreateBookingRecord): Promise<void> {

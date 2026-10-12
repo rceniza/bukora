@@ -1,6 +1,7 @@
 import initSqlJs from 'sql.js'
 import type { Database as SqlJsDatabase, SqlJsStatic } from 'sql.js'
 import confirmationDepositMigration from '../../drizzle/0001_boring_human_torch.sql'
+import bookingCursorIndexMigration from '../../drizzle/0002_steady_phil_sheldon.sql'
 import type { SqliteClient, SqliteValue } from '../../src/data/database/SqliteClient'
 
 export class MemorySqliteClient implements SqliteClient {
@@ -53,6 +54,9 @@ export async function createMemorySqlite(migration: string, applyConfirmationMig
   const database = new sqliteModule.Database()
   database.run('PRAGMA foreign_keys = ON')
   database.run(migration.replaceAll('--> statement-breakpoint', ''))
-  if (applyConfirmationMigration) database.run(confirmationDepositMigration.replaceAll('--> statement-breakpoint', ''))
+  if (applyConfirmationMigration) {
+    database.run(confirmationDepositMigration.replaceAll('--> statement-breakpoint', ''))
+    database.run(bookingCursorIndexMigration.replaceAll('--> statement-breakpoint', ''))
+  }
   return { database, client: new MemorySqliteClient(database) }
 }

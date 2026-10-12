@@ -25,6 +25,7 @@ export const bookings = sqliteTable(
     check('bookings_confirmation_deposit_nonnegative_check', sql`${table.confirmationDepositAmountMinor} >= 0`),
     check('bookings_date_range_check', sql`${table.checkOutDate} > ${table.checkInDate}`),
     index('bookings_status_checkin_idx').on(table.status, table.checkInDate),
+    index('bookings_checkin_cursor_idx').on(table.checkInDate, table.createdAt, table.id),
     index('bookings_guest_name_idx').on(table.guestName),
   ],
 )
