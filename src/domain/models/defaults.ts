@@ -11,6 +11,7 @@ export const DEFAULT_APP_SETTINGS: Readonly<AppSettings> = Object.freeze({
   bookingRemindersEnabled: false,
   bookingReminderLeadHours: 24,
   bookingReminderRepeatHours: 0,
+  googleDriveAutoBackupEnabled: false,
   currency: 'PHP',
 })
 

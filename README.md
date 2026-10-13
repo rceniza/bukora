@@ -46,6 +46,7 @@ This can make handoffs and end-of-day reviews more consistent: the owner can see
 - **Settings:** customize the in-app display name, property name, default package prices, confirmation deposit, and currency.
 - **Local booking reminders:** optionally schedule on-device reminders for confirmed bookings, choose how many hours before check-in to start, and set an optional repeat interval. Tentative and cancelled bookings never get reminder notifications. The schedule is refreshed after booking changes and when the app returns to the foreground.
 - **Backup and restore:** export a versioned backup and validate it before replacing the current ledger.
+- **Google Drive backup:** optionally connect a Google account and keep a Drive backup updated when online. Restoring always requires review and confirmation.
 - **Offline storage:** native iOS and Android builds use SQLite on the device. No network is required for booking work.
 
 ## Example pricing and customization
@@ -141,6 +142,12 @@ bun run web       # starts the browser preview
 
 The native `ios` and `android` scripts build and run the native app; having the Expo JavaScript bundle alone is not enough to provide those platforms' native modules.
 
+### Install an Android release
+
+Download the APK from the [GitHub Releases page](https://github.com/rceniza/bukora/releases/latest), allow your Android browser or file manager to install apps from that source, then open the APK to install or update Bukora. Install an update over the existing app instead of uninstalling it so Android retains the local SQLite booking database. The APK is signed with the repository owner's local signing key; future updates must use that same key.
+
+The published APK's Google Drive sign-in is configured for the maintainer's Google Cloud project and its OAuth app is currently in Testing. Other owners can use the app offline, but Drive sign-in requires their own Google Cloud OAuth clients and a build configured with those IDs. See [Optional Google Drive backup](#optional-google-drive-backup) for setup. Never put OAuth client secrets in a mobile build.
+
 Bun is the repository's only package manager; `bun.lock` is the committed dependency lockfile. Bun changes how dependencies are installed, not which upstream packages the app depends on. Some packages may still carry deprecation notices in registry metadata even when Bun does not print npm's warnings.
 
 ## Run the web preview with Docker
@@ -161,7 +168,21 @@ The browser preview uses browser-local storage as its development persistence ad
 2. Replace the sample property name with your business name.
 3. Set the in-app display name, currency, and default package prices.
 4. Create a test booking and review the quote, payment, balance, and backup screens before entering live records.
-5. Export a backup on a regular schedule and store it somewhere separate from the device.
+5. Export a backup on a regular schedule or connect Google Drive in **Settings → Backup and restore**.
+
+### Optional Google Drive backup
+
+Google Drive backup is optional. Bookings continue to work offline and remain in the device's local database. When enabled, Bukora uploads a versioned JSON snapshot after local changes and when an internet connection returns. It requests Google's `drive.file` permission, which gives the app access to its own backup file. Restoring is a separate, confirmed action that replaces the current device's ledger. If another device changed the Drive copy, Bukora stops automatic uploads and asks you to restore that copy or explicitly replace it; it does not merge records.
+
+To configure native Google sign-in:
+
+1. In [Google Cloud Console](https://console.cloud.google.com/), create or select a project, enable the Google Drive API, and configure the OAuth consent screen. Add owner/test accounts while the consent screen is in testing.
+2. Create a **Web application** OAuth client ID. For Android, create an **Android** client using the app's Android package (`com.rceniza.bukora` by default) and the SHA-1 signing certificate fingerprint. For iOS, create an **iOS** client using the bundle identifier (`com.rceniza.bukora` by default).
+3. Copy `.env.example` to `.env.local`, then set `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` and `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID`. Set `EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME` to the reversed iOS client ID, beginning with `com.googleusercontent.apps.`.
+4. Stop Expo, rebuild the native app with `bun run android` or `bun run ios`, and install that development build. Google sign-in uses native modules and does not run in Expo Go or the browser preview.
+5. Open **Settings → Backup and restore**, connect the Google account, enable automatic backups, and use **Back up to Drive now** to verify setup. The first upload creates a file named `Bukora backup.json` in that account's Drive.
+
+The OAuth client IDs are public app identifiers, not client secrets. Keep `.env.local` out of version control; it is ignored by Git. Do not put a Google client secret in the app. The Drive file contains the same personal and business data as a local export, so protect the Google account and any downloaded backup accordingly. Web preview explains that Drive connection is available in installed Android and iOS builds only.
 
 For a private custom build, update the app's native project identity in [`app.json`](app.json), including the iOS bundle identifier and Android package name, before distributing your build. The name in Settings changes the in-app business identity; it does not change the installed app's launcher label or native bundle/package identifiers. Those are build-time settings.
 
@@ -169,10 +190,11 @@ If your business uses different booking options or eligibility rules, update the
 
 ### Data and privacy notes
 
-- Native booking records are stored locally on the device in SQLite. The app currently has no login, cloud backup, or automatic synchronization.
+- Native booking records are stored locally on the device in SQLite. Optional Drive backup uses Google account sign-in and uploads snapshots; it is not live multi-device synchronization.
 - The browser preview stores records in the browser's local storage and is not a substitute for the native SQLite database.
 - Backups include guest contact details, bookings, payments, settings, and activity history. Treat backup files as sensitive personal and business data; protect them and share them only with people who should see those records.
 - Restoring a backup replaces the current ledger after validation and an explicit confirmation. Keep a separate copy of any records you need before restoring.
+- Google Drive snapshots include guest contact details and payment history. Access is restricted by the connected Google account and the app's `drive.file` permission; Drive backups are JSON and are not end-to-end encrypted by Bukora.
 - Device loss, app deletion, browser-data cleanup, or storage failure can make local-only records unavailable. Export and test a backup regularly.
 
 ## Tests and quality checks

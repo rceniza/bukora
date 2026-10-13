@@ -25,6 +25,7 @@ import { BookingPaymentHistory } from '../../components/booking/BookingPaymentHi
 import { BookingPricingFields, type CustomItemDraft } from '../../components/booking/BookingPricingFields'
 import { useAppSettings } from '../../src/application/settings/AppSettingsContext'
 import { useBookingReminders } from '../../src/application/settings/BookingReminderProvider'
+import { useGoogleDriveBackup } from '../../src/application/settings/GoogleDriveBackupProvider'
 import { calculateBookingQuote } from '../../src/domain/services/bookingQuote'
 import type { PricingRates } from '../../src/domain/services/bookingQuote'
 import { parsePHPAmountInput } from '../../src/shared/utils/moneyInput'
@@ -81,6 +82,7 @@ export default function BookingDetailScreen() {
   const service = useMemo(() => new BookingManagementService(bookingRepository), [])
   const { settings } = useAppSettings()
   const { refresh: refreshReminders } = useBookingReminders()
+  const { queueBackup } = useGoogleDriveBackup()
   const rates = useMemo<PricingRates>(() => {
     const lineItems = record?.lineItems ?? []
     const basePackage = lineItems.find((item) => item.kind === 'base_package')
@@ -186,6 +188,7 @@ export default function BookingDetailScreen() {
       const updated = await service.updateDetails(record.booking.id, { ...input, cellphone: normalizePhoneNumber(guest.cellphone, phoneCountryCode) }, {
         options: { includeSecondRoom, rentVideokeWithOneRoom, customItems: validCustomItems }, rates,
       })
+      queueBackup()
       await refreshReminders()
       setFieldErrors({})
       setRecord(updated); setEditing(false)
@@ -195,7 +198,7 @@ export default function BookingDetailScreen() {
   async function cancelBooking() {
     if (!record) return
     setSaving(true); setError('')
-    try { setRecord(await service.cancel(record.booking.id, reason)); await refreshReminders(); setConfirmCancel(false) }
+    try { setRecord(await service.cancel(record.booking.id, reason)); queueBackup(); await refreshReminders(); setConfirmCancel(false) }
     catch (cause) { setError(cause instanceof Error ? cause.message : 'Booking could not be cancelled.') }
     finally { setSaving(false) }
   }

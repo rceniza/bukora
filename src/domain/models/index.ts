@@ -75,5 +75,6 @@ export interface AppSettings {
   bookingRemindersEnabled: boolean
   bookingReminderLeadHours: number
   bookingReminderRepeatHours: number
+  googleDriveAutoBackupEnabled: boolean
   currency: 'PHP'
 }

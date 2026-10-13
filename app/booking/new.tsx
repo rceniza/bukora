@@ -14,6 +14,7 @@ import { SurfaceCard } from '../../components/ui/SurfaceCard'
 import { CreateBookingService } from '../../src/application/services/CreateBookingService'
 import { useAppSettings } from '../../src/application/settings/AppSettingsContext'
 import { useBookingReminders } from '../../src/application/settings/BookingReminderProvider'
+import { useGoogleDriveBackup } from '../../src/application/settings/GoogleDriveBackupProvider'
 import { useDashboard } from '../../src/application/dashboard/DashboardContext'
 import { bookingFormSchema } from '../../src/domain/schemas/booking'
 import { calculateBookingQuote } from '../../src/domain/services/bookingQuote'
@@ -33,6 +34,7 @@ export default function NewBookingRoute() {
   const { settings } = useAppSettings()
   const { refresh } = useDashboard()
   const { refresh: refreshReminders } = useBookingReminders()
+  const { queueBackup } = useGoogleDriveBackup()
   const [guest, setGuest] = useState<GuestDetailsValues>({ guestName: '', address: '', cellphone: '', email: '', pax: '' })
   const [phoneCountryCode, setPhoneCountryCode] = useState<PhoneCountryCode>('PH')
   const [checkInDate, setCheckInDate] = useState(initialCheckInDate)
@@ -143,6 +145,7 @@ export default function NewBookingRoute() {
 
       setOverlaps([])
       await createBookingService.create({ booking: bookingInput, pricing })
+      queueBackup()
       await refreshReminders()
       await refresh()
       router.replace('/')

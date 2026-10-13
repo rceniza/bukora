@@ -13,6 +13,7 @@ export const appSettingsSchema = z.object({
   bookingRemindersEnabled: z.boolean().default(DEFAULT_APP_SETTINGS.bookingRemindersEnabled),
   bookingReminderLeadHours: z.number().int().min(1).max(720).default(DEFAULT_APP_SETTINGS.bookingReminderLeadHours),
   bookingReminderRepeatHours: z.number().int().min(0).max(720).default(DEFAULT_APP_SETTINGS.bookingReminderRepeatHours),
+  googleDriveAutoBackupEnabled: z.boolean().default(DEFAULT_APP_SETTINGS.googleDriveAutoBackupEnabled),
   currency: z.literal('PHP'),
 }).superRefine((settings, context) => {
   if (settings.bookingReminderRepeatHours > 0 && settings.bookingReminderRepeatHours > settings.bookingReminderLeadHours) {
@@ -30,6 +31,7 @@ const settingKeys = [
   'bookingRemindersEnabled',
   'bookingReminderLeadHours',
   'bookingReminderRepeatHours',
+  'googleDriveAutoBackupEnabled',
   'currency',
 ] as const satisfies readonly (keyof AppSettings)[]
 
@@ -54,6 +56,7 @@ export class SettingsService {
         : values.get('bookingRemindersEnabled') === 'true',
       bookingReminderLeadHours: Number(values.get('bookingReminderLeadHours') ?? DEFAULT_APP_SETTINGS.bookingReminderLeadHours),
       bookingReminderRepeatHours: Number(values.get('bookingReminderRepeatHours') ?? DEFAULT_APP_SETTINGS.bookingReminderRepeatHours),
+      googleDriveAutoBackupEnabled: values.get('googleDriveAutoBackupEnabled') === 'true',
       currency: values.get('currency') ?? DEFAULT_APP_SETTINGS.currency,
     }
     const parsed = appSettingsSchema.safeParse(candidate)
