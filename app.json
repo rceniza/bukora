@@ -2,7 +2,7 @@
   "expo": {
     "name": "Bukora",
     "slug": "bukora",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
@@ -13,6 +13,7 @@
     },
     "android": {
       "edgeToEdgeEnabled": true,
+      "versionCode": 2,
       "package": "com.rceniza.bukora"
     },
     "web": {
