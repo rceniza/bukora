@@ -148,6 +148,10 @@ Download the APK from the [GitHub Releases page](https://github.com/rceniza/buko
 
 The published APK's Google Drive sign-in is configured for the maintainer's Google Cloud project and its OAuth app is currently in Testing. Other owners can use the app offline, but Drive sign-in requires their own Google Cloud OAuth clients and a build configured with those IDs. See [Optional Google Drive backup](#optional-google-drive-backup) for setup. Never put OAuth client secrets in a mobile build.
 
+### iOS build in this release
+
+This release includes a **Simulator-only** iOS build for testing Bukora in Apple's iOS Simulator. It is not an IPA and cannot be installed on a physical iPhone or iPad. Installing on physical Apple devices or distributing through TestFlight or the App Store requires an Apple Developer account, valid signing certificates, and provisioning. Those signing credentials are not included in this repository or release. Owners can build a signed iOS version for their own Apple account from this project after configuring signing in Xcode.
+
 Bun is the repository's only package manager; `bun.lock` is the committed dependency lockfile. Bun changes how dependencies are installed, not which upstream packages the app depends on. Some packages may still carry deprecation notices in registry metadata even when Bun does not print npm's warnings.
 
 ## Run the web preview with Docker
