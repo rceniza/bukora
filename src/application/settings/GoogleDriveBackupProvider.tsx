@@ -46,6 +46,8 @@ export function GoogleDriveBackupProvider({ children }: { children: ReactNode })
   const [syncing, setSyncing] = useState(false)
   const [error, setError] = useState('')
   const syncingRef = useRef(false)
+  const authInProgressRef = useRef(false)
+  const statusRefreshRef = useRef<Promise<void> | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const servicePromiseRef = useRef<Promise<GoogleDriveBackupService> | null>(null)
   const autoBackupEnabled = settings.googleDriveAutoBackupEnabled
@@ -63,14 +65,21 @@ export function GoogleDriveBackupProvider({ children }: { children: ReactNode })
   }, [])
 
   const refreshCloudStatus = useCallback(async () => {
-    try {
-      const service = await getService()
-      const [account, lastBackup] = await Promise.all([service.getConnectedAccount(), service.getLastBackupAt()])
-      setAccountEmail(account)
-      setLastBackupAt(lastBackup)
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Google Drive status could not be checked.')
-    }
+    if (authInProgressRef.current) return
+    if (statusRefreshRef.current) return statusRefreshRef.current
+    const refresh = (async () => {
+      try {
+        const service = await getService()
+        const [account, lastBackup] = await Promise.all([service.getConnectedAccount(), service.getLastBackupAt()])
+        setAccountEmail(account)
+        setLastBackupAt(lastBackup)
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : 'Google Drive status could not be checked.')
+      }
+    })()
+    statusRefreshRef.current = refresh
+    try { await refresh }
+    finally { if (statusRefreshRef.current === refresh) statusRefreshRef.current = null }
   }, [getService])
 
   const syncNow = useCallback(async (replaceRemote = false) => {
@@ -101,6 +110,8 @@ export function GoogleDriveBackupProvider({ children }: { children: ReactNode })
   }, [accountEmail, autoBackupEnabled, syncNow])
 
   const connect = useCallback(async () => {
+    if (authInProgressRef.current) return
+    authInProgressRef.current = true
     setError('')
     try {
       const service = await getService()
@@ -109,6 +120,8 @@ export function GoogleDriveBackupProvider({ children }: { children: ReactNode })
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Google Drive could not be connected.')
       throw cause
+    } finally {
+      authInProgressRef.current = false
     }
   }, [getService])
 
@@ -164,7 +177,7 @@ export function GoogleDriveBackupProvider({ children }: { children: ReactNode })
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (state) => {
-      if (state === 'active') {
+      if (state === 'active' && !authInProgressRef.current) {
         void refreshCloudStatus().then(() => {
           if (autoBackupEnabled) queueBackup()
         })

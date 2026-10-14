@@ -20,6 +20,15 @@ const googleDriveConfig = Constants.expoConfig?.extra?.googleDrive as {
 } | undefined
 
 let configured = false
+let authQueue: Promise<void> = Promise.resolve()
+
+// The native Google Sign-In bridge supports one auth operation at a time.
+// Serialize calls across status checks, interactive sign-in, and Drive scopes.
+function runAuthOperation<T>(operation: () => Promise<T>): Promise<T> {
+  const result = authQueue.then(operation)
+  authQueue = result.then(() => undefined, () => undefined)
+  return result
+}
 
 function ensureConfigured(): void {
   if (configured) return
@@ -40,9 +49,11 @@ function wasCancelled(result: { type: string }): boolean {
 
 async function requestDriveAuthorization(): Promise<string> {
   ensureConfigured()
-  const result = await GoogleSignin.addScopes({ scopes: [DRIVE_FILE_SCOPE] })
-  if (!result || wasCancelled(result)) throw new Error('Google Drive permission was not granted.')
-  return (await GoogleSignin.getTokens()).accessToken
+  return runAuthOperation(async () => {
+    const result = await GoogleSignin.addScopes({ scopes: [DRIVE_FILE_SCOPE] })
+    if (!result || wasCancelled(result)) throw new Error('Google Drive permission was not granted.')
+    return (await GoogleSignin.getTokens()).accessToken
+  })
 }
 
 async function responseError(response: Response): Promise<Error> {
@@ -125,25 +136,31 @@ async function writeBackup(contents: string, fileId?: string): Promise<GoogleDri
 export const googleDriveBackupGateway: GoogleDriveBackupGateway = {
   async connect() {
     ensureConfigured()
-    const account = await GoogleSignin.signIn()
-    if (wasCancelled(account)) throw new Error('Google sign-in was cancelled.')
-    const permission = await GoogleSignin.addScopes({ scopes: [DRIVE_FILE_SCOPE] })
-    if (!permission || wasCancelled(permission) || !permission.data) throw new Error('Google Drive permission was not granted.')
-    return permission.data.user.email
+    return runAuthOperation(async () => {
+      const account = await GoogleSignin.signIn()
+      if (wasCancelled(account)) throw new Error('Google sign-in was cancelled.')
+      const permission = await GoogleSignin.addScopes({ scopes: [DRIVE_FILE_SCOPE] })
+      if (!permission || wasCancelled(permission) || !permission.data) throw new Error('Google Drive permission was not granted.')
+      return permission.data.user.email
+    })
   },
 
   async getConnectedAccount() {
     if (!googleDriveConfig?.webClientId || (Platform.OS === 'ios' && !googleDriveConfig.iosClientId)) return null
     ensureConfigured()
     if (!GoogleSignin.hasPreviousSignIn()) return null
-    const response = await GoogleSignin.signInSilently()
-    return response.type === 'success' ? response.data.user.email : null
+    return runAuthOperation(async () => {
+      const response = await GoogleSignin.signInSilently()
+      return response.type === 'success' ? response.data.user.email : null
+    })
   },
 
   async disconnect() {
     if (!configured) return
-    try { await GoogleSignin.revokeAccess() }
-    finally { await GoogleSignin.signOut() }
+    await runAuthOperation(async () => {
+      try { await GoogleSignin.revokeAccess() }
+      finally { await GoogleSignin.signOut() }
+    })
   },
 
   async isOnline() {
