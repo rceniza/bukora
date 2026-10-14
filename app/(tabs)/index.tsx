@@ -14,6 +14,7 @@ import { ErrorState } from '../../components/ui/ErrorState'
 import { LoadingState } from '../../components/ui/LoadingState'
 import { PrimaryButton } from '../../components/ui/PrimaryButton'
 import { DashboardAvailabilityCalendar } from '../../components/dashboard/DashboardAvailabilityCalendar'
+import { BukoraLogo } from '../../components/brand/BukoraLogo'
 
 export default function DashboardScreen() {
   const router = useRouter()
@@ -26,7 +27,10 @@ export default function DashboardScreen() {
         <View className="flex-row items-center justify-between">
           <View>
             <Text className="text-sm font-medium text-muted">{settings.propertyName.toUpperCase()}</Text>
-            <Text className="mt-1 text-3xl font-bold text-ink">{settings.displayName}</Text>
+            <View className="mt-1 flex-row items-center gap-2">
+              <BukoraLogo size={36} />
+              <Text className="text-3xl font-bold text-ink">{settings.displayName}</Text>
+            </View>
           </View>
           <Link href="/settings" asChild>
             <Pressable className="h-11 w-11 items-center justify-center rounded-full bg-cenere-100" accessibilityRole="button" accessibilityLabel="Settings">

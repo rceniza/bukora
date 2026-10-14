@@ -2,18 +2,29 @@
   "expo": {
     "name": "Bukora",
     "slug": "bukora",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "scheme": "bukora",
+    "icon": "./assets/bukora-icon.png",
+    "splash": {
+      "image": "./assets/bukora-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F9FAF7"
+    },
     "ios": {
       "supportsTablet": true,
+      "buildNumber": "2",
       "bundleIdentifier": "com.rceniza.bukora"
     },
     "android": {
       "edgeToEdgeEnabled": true,
-      "versionCode": 2,
+      "versionCode": 3,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/bukora-adaptive-icon.png",
+        "backgroundColor": "#F9FAF7"
+      },
       "package": "com.rceniza.bukora"
     },
     "web": {

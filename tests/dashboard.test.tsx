@@ -12,6 +12,7 @@ describe('DashboardScreen', () => {
   it('shows the Bukora home screen and offline-first introduction', () => {
     render(<DashboardScreen />)
 
+    expect(screen.getByLabelText('Bukora logo')).toBeTruthy()
     expect(screen.getByText('Bukora')).toBeTruthy()
     expect(screen.getByText('Keep every stay in view.')).toBeTruthy()
     expect(screen.getByLabelText('Add booking')).toBeTruthy()
