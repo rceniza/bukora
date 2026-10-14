@@ -3,6 +3,11 @@ import { Tabs } from 'expo-router'
 
 const activeColor = '#378e64'
 const inactiveColor = '#7b837e'
+export const mainTabBarStyle = {
+  backgroundColor: '#ffffff',
+  borderTopColor: '#e7ebe8',
+  paddingTop: 6,
+}
 
 export default function MainTabsLayout() {
   return (
@@ -12,12 +17,8 @@ export default function MainTabsLayout() {
         tabBarActiveTintColor: activeColor,
         tabBarInactiveTintColor: inactiveColor,
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
-        tabBarStyle: {
-          backgroundColor: '#ffffff',
-          borderTopColor: '#e7ebe8',
-          paddingTop: 6,
-          paddingBottom: 6,
-        },
+        // Leave bottom padding to React Navigation so the Android system-bar inset is respected.
+        tabBarStyle: mainTabBarStyle,
       }}
     >
       <Tabs.Screen
