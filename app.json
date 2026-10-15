@@ -2,7 +2,7 @@
   "expo": {
     "name": "Bukora",
     "slug": "bukora",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
@@ -15,12 +15,12 @@
     },
     "ios": {
       "supportsTablet": true,
-      "buildNumber": "3",
+      "buildNumber": "4",
       "bundleIdentifier": "com.rceniza.bukora"
     },
     "android": {
       "edgeToEdgeEnabled": true,
-      "versionCode": 4,
+      "versionCode": 5,
       "adaptiveIcon": {
         "foregroundImage": "./assets/bukora-adaptive-icon.png",
         "backgroundColor": "#F9FAF7"

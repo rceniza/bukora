@@ -22,6 +22,10 @@ jest.mock('../src/application/settings/BookingReminderProvider', () => ({
   useBookingReminders: () => ({ requestPermission: jest.fn(async () => true), refresh: jest.fn(async () => undefined) }),
 }))
 
+jest.mock('../src/data/repositories/notificationInbox', () => ({
+  notificationInboxService: { listCurrent: jest.fn(async () => []), markAsRead: jest.fn(async () => undefined) },
+}))
+
 describe('owner settings feature', () => {
   it('saves the display name and price defaults to SQLite for future bookings', async () => {
     const { database, client } = await createMemorySqlite(migration)

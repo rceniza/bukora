@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { Link, useFocusEffect, useRouter } from 'expo-router'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -15,12 +15,22 @@ import { LoadingState } from '../../components/ui/LoadingState'
 import { PrimaryButton } from '../../components/ui/PrimaryButton'
 import { DashboardAvailabilityCalendar } from '../../components/dashboard/DashboardAvailabilityCalendar'
 import { BukoraLogo } from '../../components/brand/BukoraLogo'
+import { NotificationBell } from '../../components/notifications/NotificationBell'
+import { notificationInboxService } from '../../src/data/repositories/notificationInbox'
 
 export default function DashboardScreen() {
   const router = useRouter()
   const { settings } = useAppSettings()
   const { summary, loading, error, refresh } = useDashboard()
-  useFocusEffect(useCallback(() => { void refresh() }, [refresh]))
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0)
+  const refreshNotifications = useCallback(async () => {
+    const notifications = await notificationInboxService.listCurrent(settings)
+    setUnreadNotificationCount(notifications.filter(({ isRead }) => !isRead).length)
+  }, [settings])
+  useFocusEffect(useCallback(() => {
+    void refresh()
+    void refreshNotifications().catch(() => setUnreadNotificationCount(0))
+  }, [refresh, refreshNotifications]))
   return (
     <SafeAreaView className="flex-1 bg-canvas">
       <ScrollView contentContainerClassName="mx-auto w-full max-w-2xl gap-6 px-5 py-6">
@@ -32,11 +42,14 @@ export default function DashboardScreen() {
               <Text className="text-3xl font-bold text-ink">{settings.displayName}</Text>
             </View>
           </View>
-          <Link href="/settings" asChild>
-            <Pressable className="h-11 w-11 items-center justify-center rounded-full bg-cenere-100" accessibilityRole="button" accessibilityLabel="Settings">
-              <Text className="text-lg font-bold text-cenere-700">{settings.propertyName.trim().charAt(0).toUpperCase()}</Text>
-            </Pressable>
-          </Link>
+          <View className="flex-row items-center gap-2">
+            <NotificationBell unreadCount={unreadNotificationCount} onPress={() => router.push('/notifications')} />
+            <Link href="/settings" asChild>
+              <Pressable className="h-11 w-11 items-center justify-center rounded-full bg-cenere-100" accessibilityRole="button" accessibilityLabel="Settings">
+                <Text className="text-lg font-bold text-cenere-700">{settings.propertyName.trim().charAt(0).toUpperCase()}</Text>
+              </Pressable>
+            </Link>
+          </View>
         </View>
 
         <View className="rounded-3xl bg-cenere-600 p-6">

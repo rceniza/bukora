@@ -8,6 +8,12 @@ jest.mock('expo-router', () => ({
   useFocusEffect: () => undefined,
 }))
 
+jest.mock('../src/data/repositories/notificationInbox', () => ({
+  notificationInboxService: { listCurrent: jest.fn(async () => []), markAsRead: jest.fn(async () => undefined) },
+}))
+
+jest.mock('@expo/vector-icons/Ionicons', () => ({ __esModule: true, default: () => null }))
+
 describe('DashboardScreen', () => {
   it('shows the Bukora home screen and offline-first introduction', () => {
     render(<DashboardScreen />)

@@ -1,5 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons'
 import { Tabs } from 'expo-router'
+import { Platform } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const activeColor = '#378e64'
 const inactiveColor = '#7b837e'
@@ -8,8 +10,20 @@ export const mainTabBarStyle = {
   borderTopColor: '#e7ebe8',
   paddingTop: 6,
 }
+export const ANDROID_MIN_NAVIGATION_INSET = 24
+
+export function getMainTabBarStyle(platform: string, safeAreaBottom: number) {
+  if (platform !== 'android') return mainTabBarStyle
+  const bottomInset = Math.max(safeAreaBottom, ANDROID_MIN_NAVIGATION_INSET)
+  return {
+    ...mainTabBarStyle,
+    height: 64 + bottomInset,
+    paddingBottom: bottomInset,
+  }
+}
 
 export default function MainTabsLayout() {
+  const insets = useSafeAreaInsets()
   return (
     <Tabs
       screenOptions={{
@@ -17,8 +31,7 @@ export default function MainTabsLayout() {
         tabBarActiveTintColor: activeColor,
         tabBarInactiveTintColor: inactiveColor,
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
-        // Leave bottom padding to React Navigation so the Android system-bar inset is respected.
-        tabBarStyle: mainTabBarStyle,
+        tabBarStyle: getMainTabBarStyle(Platform.OS, insets.bottom),
       }}
     >
       <Tabs.Screen

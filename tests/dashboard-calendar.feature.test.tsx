@@ -35,6 +35,10 @@ jest.mock('../src/application/dashboard/DashboardContext', () => ({
   useDashboard: () => ({ summary: mockSummary, loading: false, error: null, refresh: mockRefresh }),
 }))
 
+jest.mock('../src/data/repositories/notificationInbox', () => ({
+  notificationInboxService: { listCurrent: jest.fn(async () => []), markAsRead: jest.fn(async () => undefined) },
+}))
+
 describe('dashboard availability calendar feature', () => {
   beforeEach(() => {
     mockPush.mockClear()
@@ -67,6 +71,12 @@ describe('dashboard availability calendar feature', () => {
     render(<DashboardScreen />)
     fireEvent.press(screen.getByLabelText('Open full calendar'))
     expect(mockPush).toHaveBeenCalledWith('/calendar')
+  })
+
+  it('opens the in-app notification center from the Dashboard bell', () => {
+    render(<DashboardScreen />)
+    fireEvent.press(screen.getByRole('button', { name: 'Notifications' }))
+    expect(mockPush).toHaveBeenCalledWith('/notifications')
   })
 
   it('opens the related booking when a recent payment is selected', () => {
