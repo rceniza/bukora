@@ -73,6 +73,7 @@ describe('booking notification inbox', () => {
 
     expect(notification.isRead).toBe(false)
     await service.markAsRead([notification.id])
+    await expect(service.listReadIds()).resolves.toEqual([notification.id])
     await expect(service.listCurrent(settings, now)).resolves.toMatchObject([{ id: notification.id, isRead: true }])
     expect(readState.markRead).toHaveBeenCalledWith([notification.id])
   })

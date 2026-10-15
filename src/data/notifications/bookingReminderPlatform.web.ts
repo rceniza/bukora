@@ -3,6 +3,7 @@ import type { BookingReminderGateway, BookingReminderPlan } from '../../applicat
 export const bookingReminderGateway: BookingReminderGateway = {
   async requestPermission() { return false },
   async replaceScheduledReminders(_plan: BookingReminderPlan) {},
+  async dismissPresentedReminders(_notificationIds: string[]) {},
 }
 
 export function addBookingReminderResponseListener(_listener: (bookingId: string) => void) {

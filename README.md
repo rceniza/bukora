@@ -74,7 +74,7 @@ The main sections are **Dashboard**, **Bookings**, and **Settings**. Payment ent
 
 ### Local reminders
 
-Open **Settings → Booking reminders** to enable reminders and set the lead time (1–720 hours before 9:00 AM on the check-in date). Enter a repeat interval to receive additional reminders; leave it blank for one notification. Repeats stop at check-in. Enabling reminders requires notification permission on the device. Reminders are scheduled locally and work without a server or internet connection. A notification opens the related booking. The app badge reflects confirmed bookings currently inside their reminder window; icon badge display on Android depends on the device launcher, while iOS requires notification badge permission. The browser preview does not schedule notifications.
+Open **Settings → Booking reminders** to enable reminders and set the lead time (1–720 hours before 9:00 AM on the check-in date). Enter a repeat interval to receive additional reminders; leave it blank for one notification. Repeats stop at check-in. Enabling reminders requires notification permission on the device. Reminders are scheduled locally and work without a server or internet connection. A notification opens the related booking. The Dashboard bell shows the in-app unread count; opening Notifications marks current reminders read and synchronizes the native app-icon badge. Android launcher badges may appear as a dot or a number depending on launcher support and settings, and the badge clears when the matching presented reminder is dismissed. On iOS, app-icon badge updates require notification badge permission. The browser preview does not schedule notifications.
 
 ## Technology and architecture
 

@@ -79,6 +79,19 @@ describe('buildBookingReminderPlan', () => {
     expect(plan.badgeCount).toBe(1)
   })
 
+  it('excludes reminders already marked read from the app-icon badge and scheduled reminder badge', () => {
+    const readNotificationId = `booking-reminder:${bookingId}:2026-10-15`
+    const plan = buildBookingReminderPlan([aggregate('confirmed')], {
+      ...reminderSettings,
+      bookingReminderRepeatHours: 6,
+    },
+      new Date(2026, 9, 14, 10), [readNotificationId])
+
+    expect(plan.badgeCount).toBe(0)
+    expect(plan.occurrences.length).toBeGreaterThan(0)
+    expect(plan.occurrences.every(({ id, badgeCount }) => id === readNotificationId && badgeCount === 0)).toBe(true)
+  })
+
   it('clears schedules and badges when reminders are disabled', () => {
     expect(buildBookingReminderPlan([aggregate('confirmed')], {
       ...reminderSettings,
@@ -107,14 +120,17 @@ describe('BookingReminderService', () => {
     const gateway = {
       requestPermission: jest.fn(async () => true),
       replaceScheduledReminders: jest.fn(async () => undefined),
+      dismissPresentedReminders: jest.fn(async () => undefined),
     }
     const service = new BookingReminderService(gateway)
 
     await expect(service.requestPermission()).resolves.toBe(true)
     await service.synchronize([aggregate('confirmed')], reminderSettings, new Date(2026, 9, 13, 10))
+    await service.dismissPresentedReminders([`booking-reminder:${bookingId}:2026-10-15`])
 
     expect(gateway.replaceScheduledReminders).toHaveBeenCalledWith(expect.objectContaining({
       occurrences: [expect.objectContaining({ bookingId })], badgeCount: 0,
     }))
+    expect(gateway.dismissPresentedReminders).toHaveBeenCalledWith([`booking-reminder:${bookingId}:2026-10-15`])
   })
 })

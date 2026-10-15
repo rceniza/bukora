@@ -5,9 +5,9 @@ import appJson from '../app.json'
 describe('Bukora app branding', () => {
   it('uses the Bukora logo for app, splash, and Android adaptive icons', () => {
     const app = appJson.expo
-    expect(app.version).toBe('1.0.4')
-    expect(app.android.versionCode).toBe(5)
-    expect(app.ios.buildNumber).toBe('4')
+    expect(app.version).toBe('1.0.5')
+    expect(app.android.versionCode).toBe(6)
+    expect(app.ios.buildNumber).toBe('5')
     expect(app.icon).toBe('./assets/bukora-icon.png')
     expect(app.splash.image).toBe('./assets/bukora-icon.png')
     expect(app.android.adaptiveIcon.foregroundImage).toBe('./assets/bukora-adaptive-icon.png')

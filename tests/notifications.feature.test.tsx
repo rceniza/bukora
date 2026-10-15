@@ -6,6 +6,11 @@ import { notificationInboxService } from '../src/data/repositories/notificationI
 jest.mock('../src/application/settings/AppSettingsContext', () => ({
   useAppSettings: () => ({ settings: { bookingRemindersEnabled: true, bookingReminderLeadHours: 24 } }),
 }))
+const mockRefreshBookingReminders = jest.fn(async () => undefined)
+const mockDismissPresentedReminders = jest.fn(async () => undefined)
+jest.mock('../src/application/settings/BookingReminderProvider', () => ({
+  useBookingReminders: () => ({ refresh: mockRefreshBookingReminders, dismissPresentedReminders: mockDismissPresentedReminders }),
+}))
 jest.mock('../src/data/repositories/notificationInbox', () => ({
   notificationInboxService: { listCurrent: jest.fn(), markAsRead: jest.fn(async () => undefined) },
 }))
@@ -31,6 +36,8 @@ describe('notification center', () => {
   beforeEach(() => {
     jest.mocked(notificationInboxService.listCurrent).mockResolvedValue([notification])
     jest.mocked(notificationInboxService.markAsRead).mockResolvedValue(undefined)
+    mockRefreshBookingReminders.mockClear()
+    mockDismissPresentedReminders.mockClear()
   })
 
   it('shows active booking reminders and marks them read when the center is opened', async () => {
@@ -39,6 +46,8 @@ describe('notification center', () => {
     expect(await screen.findByText('Notifications')).toBeTruthy()
     expect(await screen.findByText('Alex Guest checks in on Oct 15, 2026.')).toBeTruthy()
     await waitFor(() => expect(notificationInboxService.markAsRead).toHaveBeenCalledWith([notification.id]))
+    await waitFor(() => expect(mockRefreshBookingReminders).toHaveBeenCalled())
+    expect(mockDismissPresentedReminders).toHaveBeenCalledWith([notification.id])
   })
 
   it('opens the associated booking when a notification is selected', async () => {

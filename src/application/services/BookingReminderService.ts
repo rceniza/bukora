@@ -5,6 +5,7 @@ const CHECK_IN_REMINDER_HOUR = 9
 const MAX_PENDING_REMINDERS = 60
 
 export interface BookingReminderOccurrence {
+  id: string
   bookingId: BookingId
   guestName: string
   checkInDate: string
@@ -20,14 +21,21 @@ export interface BookingReminderPlan {
 export interface BookingReminderGateway {
   requestPermission(): Promise<boolean>
   replaceScheduledReminders(plan: BookingReminderPlan): Promise<void>
+  dismissPresentedReminders(notificationIds: string[]): Promise<void>
+}
+
+export function bookingReminderNotificationId(bookingId: BookingId, checkInDate: string): string {
+  return `booking-reminder:${bookingId}:${checkInDate}`
 }
 
 export function buildBookingReminderPlan(
   bookings: Pick<BookingAggregate, 'booking'>[],
   settings: Pick<AppSettings, 'bookingRemindersEnabled' | 'bookingReminderLeadHours' | 'bookingReminderRepeatHours'>,
   now: Date,
+  readNotificationIds: readonly string[] = [],
 ): BookingReminderPlan {
   if (!settings.bookingRemindersEnabled) return { occurrences: [], badgeCount: 0 }
+  const readSet = new Set(readNotificationIds)
 
   const confirmed = bookings.flatMap(({ booking }) => {
     if (booking.status !== 'confirmed') return []
@@ -41,9 +49,10 @@ export function buildBookingReminderPlan(
   })
 
   const leadMs = settings.bookingReminderLeadHours * 60 * 60 * 1000
-  const badgeCount = confirmed.filter(({ checkInAt }) => {
+  const badgeCount = confirmed.filter(({ id, checkInDate, checkInAt }) => {
     const startsAt = checkInAt.getTime() - leadMs
-    return now.getTime() >= startsAt && now.getTime() < checkInAt.getTime()
+    return !readSet.has(bookingReminderNotificationId(id, checkInDate))
+      && now.getTime() >= startsAt && now.getTime() < checkInAt.getTime()
   }).length
 
   const planned: BookingReminderOccurrence[] = []
@@ -58,9 +67,11 @@ export function buildBookingReminderPlan(
           guestName: booking.name,
           checkInDate: booking.checkInDate,
           triggerAt: new Date(triggerTime),
-          badgeCount: confirmed.filter(({ checkInAt }) => {
+          id: bookingReminderNotificationId(booking.id, booking.checkInDate),
+          badgeCount: confirmed.filter(({ id, checkInDate, checkInAt }) => {
             const startsAt = checkInAt.getTime() - leadMs
-            return triggerTime >= startsAt && triggerTime < checkInAt.getTime()
+            return !readSet.has(bookingReminderNotificationId(id, checkInDate))
+              && triggerTime >= startsAt && triggerTime < checkInAt.getTime()
           }).length,
         })
       }
@@ -85,8 +96,13 @@ export class BookingReminderService {
     bookings: Pick<BookingAggregate, 'booking'>[],
     settings: Pick<AppSettings, 'bookingRemindersEnabled' | 'bookingReminderLeadHours' | 'bookingReminderRepeatHours'>,
     now: Date = new Date(),
+    readNotificationIds: readonly string[] = [],
   ): Promise<void> {
-    await this.gateway.replaceScheduledReminders(buildBookingReminderPlan(bookings, settings, now))
+    await this.gateway.replaceScheduledReminders(buildBookingReminderPlan(bookings, settings, now, readNotificationIds))
+  }
+
+  dismissPresentedReminders(notificationIds: string[]): Promise<void> {
+    return this.gateway.dismissPresentedReminders(notificationIds)
   }
 }
 

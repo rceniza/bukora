@@ -8,6 +8,7 @@ import { ErrorState } from '../components/ui/ErrorState'
 import { LoadingState } from '../components/ui/LoadingState'
 import { SurfaceCard } from '../components/ui/SurfaceCard'
 import { useAppSettings } from '../src/application/settings/AppSettingsContext'
+import { useBookingReminders } from '../src/application/settings/BookingReminderProvider'
 import type { BookingInboxNotification } from '../src/application/services/NotificationInboxService'
 import { notificationInboxService } from '../src/data/repositories/notificationInbox'
 import { formatDisplayDate } from '../src/shared/utils/date'
@@ -15,6 +16,7 @@ import { formatDisplayDate } from '../src/shared/utils/date'
 export default function NotificationsScreen() {
   const router = useRouter()
   const { settings } = useAppSettings()
+  const { refresh: refreshBookingReminders, dismissPresentedReminders } = useBookingReminders()
   const [notifications, setNotifications] = useState<BookingInboxNotification[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -27,13 +29,15 @@ export default function NotificationsScreen() {
       setNotifications(current)
       const unreadIds = current.filter(({ isRead }) => !isRead).map(({ id }) => id)
       await notificationInboxService.markAsRead(unreadIds)
+      await refreshBookingReminders()
+      await dismissPresentedReminders(current.map(({ id }) => id))
       setNotifications(current.map((notification) => ({ ...notification, isRead: true })))
     } catch {
       setError('Notifications could not be loaded from this device.')
     } finally {
       setLoading(false)
     }
-  }, [settings])
+  }, [dismissPresentedReminders, refreshBookingReminders, settings])
   useFocusEffect(useCallback(() => { void loadNotifications() }, [loadNotifications]))
 
   return (

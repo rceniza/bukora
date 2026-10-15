@@ -14,12 +14,14 @@ import {
 interface BookingReminderContextValue {
   requestPermission: () => Promise<boolean>
   refresh: () => Promise<void>
+  dismissPresentedReminders: (notificationIds: string[]) => Promise<void>
 }
 
 const reminderService = new BookingReminderService(bookingReminderGateway)
 const BookingReminderContext = createContext<BookingReminderContextValue>({
   requestPermission: () => reminderService.requestPermission(),
   refresh: async () => undefined,
+  dismissPresentedReminders: async () => undefined,
 })
 
 export function BookingReminderProvider({ children }: { children: ReactNode }) {
@@ -27,10 +29,19 @@ export function BookingReminderProvider({ children }: { children: ReactNode }) {
   const router = useRouter()
 
   const refresh = useCallback(async () => {
-    const { bookingRepository } = await import('../../data/repositories')
-    const bookings = await bookingRepository.listAll()
-    await reminderService.synchronize(bookings, settings)
+    const [{ bookingRepository }, { notificationInboxService }] = await Promise.all([
+      import('../../data/repositories'),
+      import('../../data/repositories/notificationInbox'),
+    ])
+    const [bookings, readIds] = await Promise.all([
+      bookingRepository.listAll(),
+      notificationInboxService.listReadIds(),
+    ])
+    await reminderService.synchronize(bookings, settings, new Date(), readIds)
   }, [settings])
+
+  const dismissPresentedReminders = useCallback((notificationIds: string[]) =>
+    reminderService.dismissPresentedReminders(notificationIds), [])
 
   useEffect(() => {
     if (ready) void refresh().catch(() => undefined)
@@ -44,7 +55,17 @@ export function BookingReminderProvider({ children }: { children: ReactNode }) {
   }, [ready, refresh])
 
   useEffect(() => {
-    const openBooking = (bookingId: string) => router.push(`/booking/${bookingId}`)
+    const openBooking = (bookingId: string) => {
+      router.push(`/booking/${bookingId}`)
+      void (async () => {
+        const { notificationInboxService } = await import('../../data/repositories/notificationInbox')
+        const current = await notificationInboxService.listCurrent(settings)
+        const readIds = current.filter(({ bookingId: id }) => id === bookingId).map(({ id }) => id)
+        await notificationInboxService.markAsRead(readIds)
+        await refresh()
+        await dismissPresentedReminders(readIds)
+      })().catch(() => undefined)
+    }
     const subscription = addBookingReminderResponseListener(openBooking)
     void getLastBookingReminderResponse().then((bookingId) => {
       if (!bookingId) return
@@ -52,10 +73,10 @@ export function BookingReminderProvider({ children }: { children: ReactNode }) {
       return clearLastBookingReminderResponse()
     }).catch(() => undefined)
     return () => subscription.remove()
-  }, [router])
+  }, [dismissPresentedReminders, refresh, router, settings])
 
   return (
-    <BookingReminderContext.Provider value={{ requestPermission: () => reminderService.requestPermission(), refresh }}>
+    <BookingReminderContext.Provider value={{ requestPermission: () => reminderService.requestPermission(), refresh, dismissPresentedReminders }}>
       {children}
     </BookingReminderContext.Provider>
   )

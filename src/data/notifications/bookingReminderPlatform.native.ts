@@ -44,7 +44,7 @@ export const bookingReminderGateway: BookingReminderGateway = {
           body: `${reminder.guestName} checks in on ${reminder.checkInDate}.`,
           sound: 'default',
           badge: reminder.badgeCount,
-          data: { [REMINDER_TAG]: true, bookingId: reminder.bookingId },
+          data: { [REMINDER_TAG]: true, bookingId: reminder.bookingId, checkInDate: reminder.checkInDate, notificationId: reminder.id },
           ...(Platform.OS === 'android' ? { channelId: CHANNEL_ID } : {}),
         },
         trigger: {
@@ -55,6 +55,21 @@ export const bookingReminderGateway: BookingReminderGateway = {
       })
     }
     await Notifications.setBadgeCountAsync(plan.badgeCount)
+  },
+
+  async dismissPresentedReminders(notificationIds) {
+    const notificationIdSet = new Set(notificationIds)
+    if (notificationIdSet.size === 0) return
+    const presented = await Notifications.getPresentedNotificationsAsync()
+    await Promise.all(presented.flatMap((notification) => {
+      const data = notification.request.content.data
+      if (data[REMINDER_TAG] !== true) return []
+      const id = typeof data.notificationId === 'string' ? data.notificationId : null
+      const bookingId = typeof data.bookingId === 'string' ? data.bookingId : null
+      const matches = (id !== null && notificationIdSet.has(id))
+        || (id === null && bookingId !== null && [...notificationIdSet].some((value) => value.startsWith(`booking-reminder:${bookingId}:`)))
+      return matches ? [Notifications.dismissNotificationAsync(notification.request.identifier)] : []
+    }))
   },
 }
 

@@ -1,5 +1,6 @@
 import type { AppSettings, BookingId } from '../../domain/models'
 import type { BookingRepository } from '../../domain/ports/BookingRepository'
+import { bookingReminderNotificationId } from './BookingReminderService'
 
 export interface BookingInboxNotification {
   id: string
@@ -29,7 +30,7 @@ export function buildCurrentBookingNotifications(
     const reminderAt = checkInAt.getTime() - leadMilliseconds
     if (now.getTime() < reminderAt || now.getTime() >= checkInAt.getTime()) return []
     return [{
-      id: `booking-reminder:${booking.id}:${booking.checkInDate}`,
+      id: bookingReminderNotificationId(booking.id, booking.checkInDate),
       bookingId: booking.id,
       guestName: booking.guestName,
       checkInDate: booking.checkInDate,
@@ -55,6 +56,10 @@ export class NotificationInboxService {
     const readSet = new Set(readIds)
     return buildCurrentBookingNotifications(bookings, settings, now)
       .map((notification) => ({ ...notification, isRead: readSet.has(notification.id) }))
+  }
+
+  listReadIds(): Promise<string[]> {
+    return this.readState.listReadIds()
   }
 
   markAsRead(ids: string[]): Promise<void> {
