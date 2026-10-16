@@ -1,17 +1,18 @@
 import { Text } from 'react-native'
 import { fireEvent, renderRouter, screen } from 'expo-router/testing-library'
-import MainTabsLayout, { ANDROID_MIN_NAVIGATION_INSET, getMainTabBarStyle, mainTabBarStyle } from '../app/(tabs)/_layout'
+import MainTabsLayout, { ANDROID_MIN_NAVIGATION_INSET, getMainTabBarInsets, mainTabBarStyle } from '../app/(tabs)/_layout'
 
 jest.mock('@expo/vector-icons/Ionicons', () => ({ __esModule: true, default: () => null }))
 
 const destination = (label: string) => () => <Text>{label} section</Text>
 
 describe('main tab navigation', () => {
-  it('reserves the Android system navigation area below all main tabs', () => {
+  it('passes the measured Android system inset to the tab navigator', () => {
     expect(mainTabBarStyle).not.toHaveProperty('paddingBottom')
-    expect(getMainTabBarStyle('android', 0)).toMatchObject({ height: 64 + ANDROID_MIN_NAVIGATION_INSET, paddingBottom: ANDROID_MIN_NAVIGATION_INSET })
-    expect(getMainTabBarStyle('android', 42)).toMatchObject({ height: 106, paddingBottom: 42 })
-    expect(getMainTabBarStyle('ios', 34)).not.toHaveProperty('height')
+    expect(mainTabBarStyle).not.toHaveProperty('height')
+    expect(getMainTabBarInsets('android', 0)).toEqual({ bottom: ANDROID_MIN_NAVIGATION_INSET })
+    expect(getMainTabBarInsets('android', 42)).toEqual({ bottom: 42 })
+    expect(getMainTabBarInsets('ios', 34)).toEqual({ bottom: 34 })
   })
 
   it('keeps Dashboard, Bookings, and Settings reachable without a standalone Payments tab', () => {

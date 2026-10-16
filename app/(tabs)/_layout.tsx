@@ -12,13 +12,11 @@ export const mainTabBarStyle = {
 }
 export const ANDROID_MIN_NAVIGATION_INSET = 24
 
-export function getMainTabBarStyle(platform: string, safeAreaBottom: number) {
-  if (platform !== 'android') return mainTabBarStyle
-  const bottomInset = Math.max(safeAreaBottom, ANDROID_MIN_NAVIGATION_INSET)
+export function getMainTabBarInsets(platform: string, safeAreaBottom: number) {
   return {
-    ...mainTabBarStyle,
-    height: 64 + bottomInset,
-    paddingBottom: bottomInset,
+    bottom: platform === 'android'
+      ? Math.max(safeAreaBottom, ANDROID_MIN_NAVIGATION_INSET)
+      : safeAreaBottom,
   }
 }
 
@@ -26,12 +24,13 @@ export default function MainTabsLayout() {
   const insets = useSafeAreaInsets()
   return (
     <Tabs
+      safeAreaInsets={getMainTabBarInsets(Platform.OS, insets.bottom)}
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: activeColor,
         tabBarInactiveTintColor: inactiveColor,
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
-        tabBarStyle: getMainTabBarStyle(Platform.OS, insets.bottom),
+        tabBarStyle: mainTabBarStyle,
       }}
     >
       <Tabs.Screen
