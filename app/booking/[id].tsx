@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
 import { Pressable, Text, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { AppSafeAreaView as SafeAreaView } from '../../src/components/layout/AppSafeAreaView'
 import { CalendarDateField } from '../../components/forms/CalendarDateField'
 import { GuestDetailsFields } from '../../components/forms/GuestDetailsFields'
 import type { GuestDetailsValues } from '../../components/forms/GuestDetailsFields'

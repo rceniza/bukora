@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import { Link, useFocusEffect, useRouter } from 'expo-router'
 import { Pressable, ScrollView, Text, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { AppSafeAreaView as SafeAreaView } from '../../src/components/layout/AppSafeAreaView'
 import { SectionHeading } from '../../components/ui/SectionHeading'
 import { SurfaceCard } from '../../components/ui/SurfaceCard'
 import { AmountDisplay } from '../../components/ui/AmountDisplay'

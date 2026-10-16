@@ -10,13 +10,10 @@ export const mainTabBarStyle = {
   borderTopColor: '#e7ebe8',
   paddingTop: 6,
 }
-export const ANDROID_MIN_NAVIGATION_INSET = 24
-
 export function getMainTabBarInsets(platform: string, safeAreaBottom: number) {
   return {
-    bottom: platform === 'android'
-      ? Math.max(safeAreaBottom, ANDROID_MIN_NAVIGATION_INSET)
-      : safeAreaBottom,
+    // The Android root content frame already ends above the system navigation area.
+    bottom: platform === 'android' ? 0 : safeAreaBottom,
   }
 }
 

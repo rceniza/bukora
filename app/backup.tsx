@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Platform, ScrollView, Switch, Text, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { AppSafeAreaView as SafeAreaView } from '../src/components/layout/AppSafeAreaView'
 import { ErrorState } from '../components/ui/ErrorState'
 import { PrimaryButton } from '../components/ui/PrimaryButton'
 import { SurfaceCard } from '../components/ui/SurfaceCard'

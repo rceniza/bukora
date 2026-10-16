@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'expo-router'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { AppSafeAreaView as SafeAreaView } from '../../src/components/layout/AppSafeAreaView'
 import { ActivityIndicator, Platform, Switch, Text, View } from 'react-native'
 import { AppTextField } from '../../components/ui/AppTextField'
 import { PrimaryButton } from '../../components/ui/PrimaryButton'

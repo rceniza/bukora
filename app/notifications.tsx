@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import { useFocusEffect, useRouter } from 'expo-router'
 import { Pressable, ScrollView, Text, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { AppSafeAreaView as SafeAreaView } from '../src/components/layout/AppSafeAreaView'
 import { BackButton } from '../components/navigation/BackButton'
 import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorState } from '../components/ui/ErrorState'

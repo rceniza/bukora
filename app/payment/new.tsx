@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { Text, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { AppSafeAreaView as SafeAreaView } from '../../src/components/layout/AppSafeAreaView'
 import { PaymentEntryForm } from '../../components/forms/PaymentEntryForm'
 import { BackButton } from '../../components/navigation/BackButton'
 import { ErrorState } from '../../components/ui/ErrorState'
