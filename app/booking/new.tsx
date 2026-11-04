@@ -20,7 +20,7 @@ import { bookingFormSchema } from '../../src/domain/schemas/booking'
 import { calculateBookingQuote } from '../../src/domain/services/bookingQuote'
 import { bookingRepository } from '../../src/data/repositories/bookingRepository'
 import { parsePHPAmountInput } from '../../src/shared/utils/moneyInput'
-import { checkoutAfterChangingCheckIn, isValidISODate, minimumCheckoutDate, parseISODate } from '../../src/shared/utils/date'
+import { checkoutAfterChangingCheckIn, getStayNightCount, isValidISODate, minimumCheckoutDate, parseISODate } from '../../src/shared/utils/date'
 import { normalizePhoneNumber, type PhoneCountryCode } from '../../src/shared/utils/phone'
 import { BackButton } from '../../components/navigation/BackButton'
 import { FormScrollView } from '../../components/forms/FormScrollView'
@@ -65,12 +65,13 @@ export default function NewBookingRoute() {
     return [{ kind: item.kind, description: item.description, quantity, amountMinor }]
   }), [customItems])
   const quoteResult = useMemo(() => {
+    const nights = getStayNightCount(checkInDate, checkOutDate) ?? 1
     try {
-      return { quote: calculateBookingQuote({ includeSecondRoom, rentVideokeWithOneRoom, customItems: validCustomItems }, rates), error: '' }
+      return { quote: calculateBookingQuote({ nights, includeSecondRoom, rentVideokeWithOneRoom, customItems: validCustomItems }, rates), error: '' }
     } catch {
-      return { quote: calculateBookingQuote({ includeSecondRoom, rentVideokeWithOneRoom }, rates), error: 'Check the discount amount; discounts cannot exceed the booking total.' }
+      return { quote: calculateBookingQuote({ nights, includeSecondRoom, rentVideokeWithOneRoom }, rates), error: 'Check the discount amount; discounts cannot exceed the booking total.' }
     }
-  }, [includeSecondRoom, rates, rentVideokeWithOneRoom, validCustomItems])
+  }, [checkInDate, checkOutDate, includeSecondRoom, rates, rentVideokeWithOneRoom, validCustomItems])
 
   function changeGuest(field: keyof GuestDetailsValues, value: string) {
     setGuest((current) => ({ ...current, [field]: value }))
@@ -134,7 +135,7 @@ export default function NewBookingRoute() {
       return
     }
 
-    const pricing = { includeSecondRoom, rentVideokeWithOneRoom, customItems: validCustomItems }
+    const pricing = { nights: getStayNightCount(checkInDate, checkOutDate) ?? 1, includeSecondRoom, rentVideokeWithOneRoom, customItems: validCustomItems }
     try {
       setSaving(true)
       const conflicts = await bookingRepository.findOverlaps(checkInDate, checkOutDate)

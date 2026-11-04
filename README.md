@@ -55,7 +55,7 @@ The repository's initial settings demonstrate Cenere Beach House's current packa
 
 | Item | Example default |
 | --- | ---: |
-| Night use, including one room | ₱5,900 |
+| Night use, including one room (per night) | ₱5,900 |
 | Optional second room | +₱1,800 |
 | Videoke when only one room is booked | +₱800 |
 | Videoke when the second room is included | Free |
@@ -64,7 +64,7 @@ These are **sample defaults**, not required Bukora prices. A new owner can chang
 
 Tentative bookings still hold their dates against overlapping bookings, so an unpaid reservation cannot accidentally be double-booked. Cancel a tentative booking to release its dates. A confirmed booking remains confirmed if a refund is later recorded; cancel it explicitly to release the reservation.
 
-The current booking rules model one night-use package, one included room, an optional second room, and the videoke rule above. The app supports custom charge and discount lines, but a business with a different package structure or different room/amenity rules may need to adapt the quote rules in the source code. There is no general package editor yet.
+The current booking rules charge the night-use package and one included room for each night between check-in and check-out. The optional second room and videoke are flat add-ons per booking. The app supports custom charge and discount lines, but a business with a different package structure or different room/amenity rules may need to adapt the quote rules in the source code. There is no general package editor yet.
 
 ## Screens and navigation
 

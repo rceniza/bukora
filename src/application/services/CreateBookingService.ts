@@ -6,6 +6,7 @@ import type { Booking, BookingActivity, BookingLineItem, UUID } from '../../doma
 import { createUUID } from '../../shared/utils/uuid'
 import type { BookingAggregate, BookingRepository } from '../../domain/ports/BookingRepository'
 import { DEFAULT_APP_SETTINGS } from '../../domain/models/defaults'
+import { getStayNightCount } from '../../shared/utils/date'
 
 export interface CreateBookingCommand {
   booking: BookingFormInput
@@ -38,7 +39,9 @@ export class CreateBookingService {
 
   async create(command: CreateBookingCommand): Promise<BookingAggregate> {
     const guest = bookingFormSchema.parse(command.booking)
-    const quote = calculateBookingQuote(command.pricing, this.rates)
+    const nights = getStayNightCount(guest.checkInDate, guest.checkOutDate)
+    if (nights === null) throw new RangeError('A valid stay duration is required to calculate the booking total.')
+    const quote = calculateBookingQuote({ ...command.pricing, nights }, this.rates)
     const createdAt = this.now()
     const booking: Booking = {
       id: this.createId(),

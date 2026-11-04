@@ -11,6 +11,16 @@ describe('calculateBookingQuote', () => {
     ])
   })
 
+  it.each([1, 2, 3, 7])('multiplies the base rate by %i nights', (nights) => {
+    const quote = calculateBookingQuote({ nights })
+
+    expect(quote.lineItems[0]).toMatchObject({
+      kind: 'base_package', quantity: nights, unitAmountMinor: 590000,
+      totalAmountMinor: 590000 * nights,
+    })
+    expect(quote.totalAmountMinor).toBe(590000 * nights)
+  })
+
   it('adds the second room and records the included videoke without charging for either benefit twice', () => {
     const quote = calculateBookingQuote({ includeSecondRoom: true })
 

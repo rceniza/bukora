@@ -76,4 +76,21 @@ describe('BookingManagementService pricing edits', () => {
     expect(result.lineItems.find(({ kind }) => kind === 'videoke')).toMatchObject({ description: 'Videoke rental', totalAmountMinor: 80000 })
     expect(result.activity[0].details).toMatchObject({ previous: { totalAmountMinor: 590000 }, next: { totalAmountMinor: 670000 } })
   })
+
+  it('recalculates the base rate from the updated stay duration', async () => {
+    const current = makeRecord()
+    const repository = {
+      findById: jest.fn().mockResolvedValue(current), findOverlaps: jest.fn().mockResolvedValue([]), update: jest.fn().mockResolvedValue(undefined),
+    } as unknown as BookingRepository
+    const service = new BookingManagementService(repository)
+    const result = await service.updateDetails(booking.id as never, {
+      ...details, checkOutDate: '2026-12-05',
+    }, {
+      options: {},
+      rates: { nightUseAmountMinor: 590000, additionalRoomAmountMinor: 180000, videokeRentalAmountMinor: 80000 },
+    })
+
+    expect(result.lineItems[0]).toMatchObject({ quantity: 4, totalAmountMinor: 2360000 })
+    expect(result.activity[0].details).toMatchObject({ next: { totalAmountMinor: 2360000 } })
+  })
 })

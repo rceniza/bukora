@@ -5,6 +5,7 @@ import type { BookingQuoteOptions, PricingRates } from '../../domain/services/bo
 import type { Booking, BookingActivity, BookingId, BookingLineItem, UUID } from '../../domain/models'
 import type { BookingAggregate, BookingRepository } from '../../domain/ports/BookingRepository'
 import { createUUID } from '../../shared/utils/uuid'
+import { getStayNightCount } from '../../shared/utils/date'
 
 export interface BookingPricingUpdate {
   options: BookingQuoteOptions
@@ -29,8 +30,10 @@ export class BookingManagementService {
       pax: next.pax ?? 0,
       updatedAt: this.now(),
     }
+    const nights = getStayNightCount(next.checkInDate, next.checkOutDate)
+    if (nights === null) throw new RangeError('A valid stay duration is required to calculate the booking total.')
     const updatedLineItems = pricing
-      ? calculateBookingQuote(pricing.options, pricing.rates).lineItems.map((item): BookingLineItem => ({
+      ? calculateBookingQuote({ ...pricing.options, nights }, pricing.rates).lineItems.map((item): BookingLineItem => ({
         ...item,
         id: this.createId(),
         bookingId: booking.id,

@@ -22,7 +22,7 @@ describe('booking creation pricing snapshot', () => {
           email: '',
           pax: 16,
           checkInDate: '2026-11-10',
-          checkOutDate: '2026-11-11',
+          checkOutDate: '2026-11-13',
           notes: '',
         },
         pricing: {
@@ -39,19 +39,20 @@ describe('booking creation pricing snapshot', () => {
       expect(saved?.booking.address).toBe('San Juan, La Union')
       expect(saved?.booking.pax).toBe(16)
       expect(saved?.lineItems.map(({ kind, totalAmountMinor }) => [kind, totalAmountMinor])).toEqual([
-        ['base_package', 590000],
+        ['base_package', 1770000],
         ['included_room', 0],
         ['videoke', 80000],
         ['custom_charge', 40000],
         ['discount', -20000],
       ])
-      expect(saved?.lineItems.reduce((total, item) => total + item.totalAmountMinor, 0)).toBe(690000)
+      expect(saved?.lineItems[0]).toMatchObject({ quantity: 3, unitAmountMinor: 590000 })
+      expect(saved?.lineItems.reduce((total, item) => total + item.totalAmountMinor, 0)).toBe(1870000)
       expect(saved?.activity[0].details).toEqual({
         status: 'tentative',
         confirmationDepositAmountMinor: 100000,
         checkInDate: '2026-11-10',
-        checkOutDate: '2026-11-11',
-        totalAmountMinor: 690000,
+        checkOutDate: '2026-11-13',
+        totalAmountMinor: 1870000,
       })
     } finally {
       database.close()

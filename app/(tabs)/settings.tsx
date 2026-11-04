@@ -150,7 +150,7 @@ export default function SettingsScreen() {
           <Text className="-mt-3 text-sm leading-5 text-muted">New bookings use these rates. Existing bookings keep their saved price breakdown.</Text>
           <Text className="-mt-2 text-sm font-medium text-muted">Currency · Philippine peso (PHP)</Text>
           <AppTextField
-            label="Night-use package (PHP)"
+            label="Night-use rate per night (PHP)"
             value={draft.nightUseAmount}
             onChangeText={(value) => updateDraft('nightUseAmount', value)}
             error={errors.nightUseAmount}

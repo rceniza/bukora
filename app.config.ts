@@ -7,8 +7,6 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     return name !== '@react-native-google-signin/google-signin'
   })
 
-  plugins.push('./plugins/with-react-native-prebuilt-debug-fix')
-
   if (iosUrlScheme) {
     plugins.push(['@react-native-google-signin/google-signin', { iosUrlScheme }])
   }

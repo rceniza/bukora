@@ -16,6 +16,7 @@ const customItemSchema = z.object({
 })
 
 export const bookingQuoteOptionsSchema = z.object({
+  nights: z.number().int().positive().default(1),
   includeSecondRoom: z.boolean().default(false),
   rentVideokeWithOneRoom: z.boolean().default(false),
   customItems: z.array(customItemSchema).default([]),
@@ -64,7 +65,7 @@ export function calculateBookingQuote(
   }
 
   const lineItems: BookingQuoteLineItem[] = [
-    lineItem('base_package', 'Night use', rates.nightUseAmountMinor),
+    lineItem('base_package', 'Night use', rates.nightUseAmountMinor, options.nights),
     lineItem('included_room', 'One room included', 0),
   ]
 

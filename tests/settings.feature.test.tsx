@@ -52,7 +52,7 @@ describe('owner settings feature', () => {
       )
 
       fireEvent.changeText(await screen.findByDisplayValue('Bukora'), 'Cenere Ledger')
-      fireEvent.changeText(screen.getByLabelText('Night-use package (PHP)'), '6100')
+      fireEvent.changeText(screen.getByLabelText('Night-use rate per night (PHP)'), '6100')
       fireEvent.changeText(screen.getByLabelText('Initial payment required to confirm (PHP)'), '1750')
       fireEvent(screen.getByRole('switch', { name: 'Booking reminders' }), 'valueChange', true)
       fireEvent.changeText(screen.getByLabelText('Remind me (hours before check-in)'), '36')

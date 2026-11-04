@@ -75,6 +75,17 @@ describe('booking date selection', () => {
     expect(screen.getByText('3 nights')).toBeTruthy()
   })
 
+  it('updates the live quote for stays longer than one night', () => {
+    render(<NewBookingRoute />)
+    const threeNightCheckout = addDays(new Date(), 3)
+
+    fireEvent.press(screen.getByLabelText('Choose Check-out'))
+    fireEvent.press(screen.getByLabelText(`Select ${format(threeNightCheckout, 'MMMM d, yyyy')}`))
+
+    expect(screen.getByText('3 × ₱5,900.00')).toBeTruthy()
+    expect(screen.getAllByText('₱17,700.00')).toHaveLength(2)
+  })
+
   it('disables checkout dates before check-in and does not change checkout when pressed', () => {
     render(<NewBookingRoute />)
     const checkIn = addDays(new Date(), 5)
